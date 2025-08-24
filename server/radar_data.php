@@ -36,6 +36,7 @@ function get_all_aircraft_positions() {
                             'pilot_name' => $aircraft['PilotName'] ?? '',
                             'group_name' => $aircraft['GroupName'] ?? '',
                             'msfs_server' => $aircraft['Server'] ?? '',
+                            'transponder_code' => $aircraft['TransponderCode'] ?? '',
                             'aircraft_type' => $aircraft['AircraftType'] ?? '',
                             'version' => $aircraft['Version'] ?? '',
                             'notes' => $aircraft['Notes'] ?? '',

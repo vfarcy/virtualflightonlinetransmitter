@@ -91,7 +91,6 @@ namespace VirtualFlightOnlineTransmitter
             this.websiteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newsletterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.airlineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.forumsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.discordToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.facebookToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.transmitterToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -104,14 +103,15 @@ namespace VirtualFlightOnlineTransmitter
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ssMain = new System.Windows.Forms.StatusStrip();
             this.tsslMain = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslSimulatorStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.tsslCommunicationsStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.tmrConnect = new System.Windows.Forms.Timer(this.components);
             this.btnDisconnect = new System.Windows.Forms.Button();
             this.gbServers = new System.Windows.Forms.GroupBox();
             this.btnRemoveServer = new System.Windows.Forms.Button();
             this.btnAddServer = new System.Windows.Forms.Button();
             this.lbServers = new System.Windows.Forms.ListBox();
-            this.tsslSimulatorStatus = new System.Windows.Forms.ToolStripStatusLabel();
-            this.tsslCommunicationsStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.forumsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gbServer.SuspendLayout();
             this.gbAircraftData.SuspendLayout();
             this.mnuMain.SuspendLayout();
@@ -625,53 +625,46 @@ namespace VirtualFlightOnlineTransmitter
             // 
             this.virtualFlightOnlineToolStripMenuItem1.Enabled = false;
             this.virtualFlightOnlineToolStripMenuItem1.Name = "virtualFlightOnlineToolStripMenuItem1";
-            this.virtualFlightOnlineToolStripMenuItem1.Size = new System.Drawing.Size(176, 22);
+            this.virtualFlightOnlineToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.virtualFlightOnlineToolStripMenuItem1.Text = "VirtualFlight.Online";
             // 
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(173, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(177, 6);
             // 
             // websiteToolStripMenuItem
             // 
             this.websiteToolStripMenuItem.Name = "websiteToolStripMenuItem";
-            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.websiteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.websiteToolStripMenuItem.Text = "&Website";
             this.websiteToolStripMenuItem.Click += new System.EventHandler(this.websiteToolStripMenuItem_Click);
             // 
             // newsletterToolStripMenuItem
             // 
             this.newsletterToolStripMenuItem.Name = "newsletterToolStripMenuItem";
-            this.newsletterToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.newsletterToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.newsletterToolStripMenuItem.Text = "&Newsletter";
             this.newsletterToolStripMenuItem.Click += new System.EventHandler(this.newsletterToolStripMenuItem_Click);
             // 
             // airlineToolStripMenuItem
             // 
             this.airlineToolStripMenuItem.Name = "airlineToolStripMenuItem";
-            this.airlineToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.airlineToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.airlineToolStripMenuItem.Text = "&Airline";
             this.airlineToolStripMenuItem.Click += new System.EventHandler(this.airlineToolStripMenuItem_Click);
-            // 
-            // forumsToolStripMenuItem
-            // 
-            this.forumsToolStripMenuItem.Name = "forumsToolStripMenuItem";
-            this.forumsToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
-            this.forumsToolStripMenuItem.Text = "&Forums";
-            this.forumsToolStripMenuItem.Click += new System.EventHandler(this.forumsToolStripMenuItem_Click);
             // 
             // discordToolStripMenuItem
             // 
             this.discordToolStripMenuItem.Name = "discordToolStripMenuItem";
-            this.discordToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.discordToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.discordToolStripMenuItem.Text = "&Discord";
             this.discordToolStripMenuItem.Click += new System.EventHandler(this.discordToolStripMenuItem_Click);
             // 
             // facebookToolStripMenuItem
             // 
             this.facebookToolStripMenuItem.Name = "facebookToolStripMenuItem";
-            this.facebookToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.facebookToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.facebookToolStripMenuItem.Text = "&Facebook";
             this.facebookToolStripMenuItem.Click += new System.EventHandler(this.facebookToolStripMenuItem_Click);
             // 
@@ -681,7 +674,7 @@ namespace VirtualFlightOnlineTransmitter
             this.whosOnlineToolStripMenuItem,
             this.radarToolStripMenuItem});
             this.transmitterToolStripMenuItem1.Name = "transmitterToolStripMenuItem1";
-            this.transmitterToolStripMenuItem1.Size = new System.Drawing.Size(176, 22);
+            this.transmitterToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
             this.transmitterToolStripMenuItem1.Text = "&Transmitter";
             // 
             // whosOnlineToolStripMenuItem
@@ -701,7 +694,7 @@ namespace VirtualFlightOnlineTransmitter
             // patreonToolStripMenuItem
             // 
             this.patreonToolStripMenuItem.Name = "patreonToolStripMenuItem";
-            this.patreonToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.patreonToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.patreonToolStripMenuItem.Text = "&Patreon";
             this.patreonToolStripMenuItem.Click += new System.EventHandler(this.patreonToolStripMenuItem_Click);
             // 
@@ -753,6 +746,18 @@ namespace VirtualFlightOnlineTransmitter
             this.tsslMain.Size = new System.Drawing.Size(16, 17);
             this.tsslMain.Text = "...";
             this.tsslMain.Click += new System.EventHandler(this.tsslMain_Click);
+            // 
+            // tsslSimulatorStatus
+            // 
+            this.tsslSimulatorStatus.Name = "tsslSimulatorStatus";
+            this.tsslSimulatorStatus.Size = new System.Drawing.Size(16, 17);
+            this.tsslSimulatorStatus.Text = "...";
+            // 
+            // tsslCommunicationsStatus
+            // 
+            this.tsslCommunicationsStatus.Name = "tsslCommunicationsStatus";
+            this.tsslCommunicationsStatus.Size = new System.Drawing.Size(16, 17);
+            this.tsslCommunicationsStatus.Text = "...";
             // 
             // tmrConnect
             // 
@@ -811,17 +816,12 @@ namespace VirtualFlightOnlineTransmitter
             this.lbServers.TabIndex = 0;
             this.lbServers.SelectedIndexChanged += new System.EventHandler(this.lbServers_SelectedIndexChanged);
             // 
-            // tsslSimulatorStatus
+            // forumsToolStripMenuItem
             // 
-            this.tsslSimulatorStatus.Name = "tsslSimulatorStatus";
-            this.tsslSimulatorStatus.Size = new System.Drawing.Size(16, 17);
-            this.tsslSimulatorStatus.Text = "...";
-            // 
-            // tsslCommunicationsStatus
-            // 
-            this.tsslCommunicationsStatus.Name = "tsslCommunicationsStatus";
-            this.tsslCommunicationsStatus.Size = new System.Drawing.Size(16, 17);
-            this.tsslCommunicationsStatus.Text = "...";
+            this.forumsToolStripMenuItem.Name = "forumsToolStripMenuItem";
+            this.forumsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.forumsToolStripMenuItem.Text = "&Forums";
+            this.forumsToolStripMenuItem.Click += new System.EventHandler(this.forumsToolStripMenuItem_Click);
             // 
             // frmMain
             // 
@@ -918,7 +918,6 @@ namespace VirtualFlightOnlineTransmitter
         private ToolStripMenuItem virtualFlightOnlineToolStripMenuItem1;
         private ToolStripMenuItem newsletterToolStripMenuItem;
         private ToolStripMenuItem airlineToolStripMenuItem;
-        private ToolStripMenuItem forumsToolStripMenuItem;
         private ToolStripMenuItem discordToolStripMenuItem;
         private ToolStripMenuItem facebookToolStripMenuItem;
         private ToolStripMenuItem patreonToolStripMenuItem;
@@ -931,6 +930,7 @@ namespace VirtualFlightOnlineTransmitter
         private ToolStripSeparator toolStripMenuItem3;
         private ToolStripStatusLabel tsslSimulatorStatus;
         private ToolStripStatusLabel tsslCommunicationsStatus;
+        private ToolStripMenuItem forumsToolStripMenuItem;
     }
 }
 

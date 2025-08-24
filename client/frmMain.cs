@@ -162,8 +162,6 @@ namespace VirtualFlightOnlineTransmitter
                 // force the numbers into USA format
                 CultureInfo usa_format = new CultureInfo("en-US");
 
-
-
                 string url = Properties.Settings.Default["ServerURL"].ToString()
                     + "?Callsign=" + Properties.Settings.Default["Callsign"].ToString()
                     + "&PilotName=" + Properties.Settings.Default["PilotName"].ToString()
@@ -209,23 +207,17 @@ namespace VirtualFlightOnlineTransmitter
                                 result = reader.ReadToEnd();
                             }
                         }
-                    } else
-                    {
+                    } else {
                         // if the response is not OK, then we have a problem
                         result = "Error: " + httpResponse.StatusCode.ToString();
                         tsslCommunicationsStatus.Text = result;
-                        Disconnect(result);
                     }
                 }
-
-                // todo - catch "server not found" errors and report them
-
             }
             catch (Exception ex)
             {
                 // do nothing
                 tsslCommunicationsStatus.Text = ex.Message;
-                Disconnect(ex.Message);
             }
 
             return result;

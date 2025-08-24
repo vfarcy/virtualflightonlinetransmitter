@@ -95,6 +95,7 @@ function get_who_data() {
                             "group_name" => $aircraft['GroupName'] ?? '',
                             "msfs_server" => $aircraft['Server'] ?? '',
                             "aircraft_type" => $aircraft['AircraftType'] ?? '',
+                            "transponder_code" => $aircraft['TransponderCode'] ?? '',
                             "version" => $aircraft['Version'] ?? '',
                             "notes" => $aircraft['Notes'] ?? '',
                             "longitude" => $aircraft['Longitude'] ?? 0,

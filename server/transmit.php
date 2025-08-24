@@ -58,6 +58,7 @@ $aircraft_type      = $_REQUEST["AircraftType"] ?? "";
 $pilot_name         = $_REQUEST["PilotName"] ?? "";
 $group_name         = $_REQUEST["GroupName"] ?? "";
 $msfs_server        = $_REQUEST["MSFSServer"] ?? "";
+$transponder_code   = $_REQUEST["TransponderCode"] ?? "";
 $latitude           = $_REQUEST["Latitude"] ?? "0";
 $longitude          = $_REQUEST["Longitude"] ?? "0";
 $altitude           = $_REQUEST["Altitude"] ?? "0";
@@ -99,6 +100,7 @@ if (empty($server_pin) || trim($user_pin) === trim($server_pin)) {
                 'AircraftType' => $aircraft_type,
                 'PilotName' => $pilot_name,
                 'GroupName' => $group_name,
+                'TransponderCode' => $transponder_code,
                 'Latitude' => (float)$latitude,
                 'Longitude' => (float)$longitude,
                 'Altitude' => (float)$altitude,

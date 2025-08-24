@@ -35,6 +35,7 @@ function get_all_aircraft_positions() {
                             'group_name' => $aircraft['GroupName'] ?? '',
                             'msfs_server' => $aircraft['Server'] ?? '',
                             'aircraft_type' => $aircraft['AircraftType'] ?? '',
+                            'transponder_code' => $aircraft['TransponderCode'] ?? '',
                             'version' => $aircraft['Version'] ?? '',
                             'notes' => $aircraft['Notes'] ?? '',
                             'longitude' => (float)($aircraft['Longitude'] ?? 0),
@@ -92,7 +93,7 @@ foreach ($aircraft_data as $aircraft) {
         .":".(int)$aircraft['groundspeed']
         .":".$aircraft['aircraft_type']
         .":::::".$aircraft['msfs_server']
-        .":B:6:1234:0:50:0:I:::::::::VFR:::::::"
+        .":B:6:".$aircraft['transponder_code'].":0:50:0:I:::::::::VFR:::::::"
         .date("YmdHis")
         .":".$aircraft['group_name']
         .":1 :1:1::S:0:"
