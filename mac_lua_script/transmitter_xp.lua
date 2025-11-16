@@ -1,0 +1,307 @@
+-- Transmitter XP - X-Plane Position Transmitter Plugin
+-- Version 1.0
+-- Compatible with X-Plane 11 and X-Plane 12
+
+-- Plugin Info
+PLUGIN_NAME = "Transmitter XP"
+PLUGIN_SIG = "virtualflight.transmitter_xp"
+PLUGIN_DESC = "Transmits aircraft position to VirtualFlight server"
+
+-- Configuration file path
+local config_file = "Output/preferences/transmitter_xp_config.txt"
+
+-- UI State
+local window_width = 400
+local window_height = 400
+
+-- Configuration variables
+local config = {
+    server_url = "https://transmitter.virtualflight.online/transmit",
+    callsign = "CALLSIGN",
+    pilot_name = "Pilot Name",
+    group_name = "VirtualFlight.Online",
+    pin = "",
+    notes = ""
+}
+
+-- Connection state
+local is_connected = false
+local last_request_time = 0
+local request_interval = 1.0 -- seconds
+
+-- Aircraft data
+local last_touchdown_velocity = 0
+
+-- Create dataref accessors (FlyWithLua style)
+dataref("aircraft_icao", "sim/aircraft/view/acf_ICAO", "readonly")
+dataref("sim_latitude", "sim/flightmodel/position/latitude", "readonly")
+dataref("sim_longitude", "sim/flightmodel/position/longitude", "readonly")
+dataref("sim_altitude", "sim/flightmodel/position/elevation", "readonly")
+dataref("sim_airspeed", "sim/flightmodel/position/indicated_airspeed", "readonly")
+dataref("sim_groundspeed", "sim/flightmodel/position/groundspeed", "readonly")
+dataref("sim_heading", "sim/flightmodel/position/psi", "readonly")
+dataref("sim_transponder", "sim/cockpit/radios/transponder_code", "readonly")
+dataref("sim_on_ground", "sim/flightmodel/failures/onground_any", "readonly")
+dataref("sim_vertical_speed", "sim/flightmodel/position/vh_ind_fpm", "readonly")
+
+local dataref_prev_on_ground = 0
+
+-- ImGui Window
+local transmitter_window = nil
+
+-- URL encode function
+local function url_encode(str)
+    if str then
+        str = string.gsub(str, "\n", "\r\n")
+        str = string.gsub(str, "([^%w %-%_%.%~])",
+            function(c) return string.format("%%%02X", string.byte(c)) end)
+        str = string.gsub(str, " ", "+")
+    end
+    return str or ""
+end
+
+-- Load configuration from file
+local function load_config()
+    local file = io.open(config_file, "r")
+    if file then
+        for line in file:lines() do
+            local key, value = line:match("^(.+)=(.*)$")
+            if key and value then
+                if key == "server_url" then config.server_url = value
+                elseif key == "callsign" then config.callsign = value
+                elseif key == "pilot_name" then config.pilot_name = value
+                elseif key == "group_name" then config.group_name = value
+                elseif key == "pin" then config.pin = value
+                elseif key == "notes" then config.notes = value
+                end
+            end
+        end
+        file:close()
+    end
+end
+
+-- Save configuration to file
+local function save_config()
+    local file = io.open(config_file, "w")
+    if file then
+        file:write("server_url=" .. config.server_url .. "\n")
+        file:write("callsign=" .. config.callsign .. "\n")
+        file:write("pilot_name=" .. config.pilot_name .. "\n")
+        file:write("group_name=" .. config.group_name .. "\n")
+        file:write("pin=" .. config.pin .. "\n")
+        file:write("notes=" .. config.notes .. "\n")
+        file:close()
+    end
+end
+
+-- Build the request URL
+local function build_url()
+    -- Get aircraft type string (handle nil and convert to string)
+    local aircraft_type_str = tostring(aircraft_icao or "")
+    
+    -- Get position and flight data with safe defaults
+    local latitude = tonumber(sim_latitude) or 0
+    local longitude = tonumber(sim_longitude) or 0
+    local altitude = tonumber(sim_altitude) or 0
+    local airspeed = tonumber(sim_airspeed) or 0
+    local groundspeed_ms = tonumber(sim_groundspeed) or 0
+    local heading = tonumber(sim_heading) or 0
+    local transponder = tonumber(sim_transponder) or 0
+    
+    -- Convert groundspeed from m/s to knots
+    local groundspeed = groundspeed_ms * 1.94384
+    
+    -- Convert transponder to 4-digit code
+    local transponder_code = string.format("%04d", math.floor(transponder))
+    
+    local url = config.server_url ..
+        "?Callsign=" .. url_encode(config.callsign) ..
+        "&PilotName=" .. url_encode(config.pilot_name) ..
+        "&GroupName=" .. url_encode(config.group_name) ..
+        "&MSFSServer=XPlane" ..
+        "&Pin=" .. url_encode(config.pin) ..
+        "&AircraftType=" .. url_encode(aircraft_type_str) ..
+        "&Latitude=" .. url_encode(string.format("%.6f", latitude)) ..
+        "&Longitude=" .. url_encode(string.format("%.6f", longitude)) ..
+        "&Altitude=" .. url_encode(string.format("%.0f", altitude)) ..
+        "&Airspeed=" .. url_encode(string.format("%.0f", airspeed)) ..
+        "&Groundspeed=" .. url_encode(string.format("%.0f", groundspeed)) ..
+        "&Heading=" .. url_encode(string.format("%.0f", heading)) ..
+        "&TouchdownVelocity=" .. url_encode(string.format("%.0f", last_touchdown_velocity)) ..
+        "&TransponderCode=" .. url_encode(transponder_code) ..
+        "&Version=1.0" ..
+        "&Notes=" .. url_encode(config.notes)
+    
+    return url
+end
+
+-- Send position data
+local function send_position_data()
+    local url = build_url()
+    
+    -- Use curl to send HTTP GET request in background
+    local curl_cmd
+    if SYSTEM == "IBM" then
+        -- Windows - use different null device
+        curl_cmd = 'curl -s -o NUL -w "%%{http_code}" "' .. url .. '" 2>NUL'
+    else
+        -- macOS and Linux
+        curl_cmd = 'curl -s -o /dev/null -w "%{http_code}" "' .. url .. '" 2>/dev/null'
+    end
+    
+    -- Execute curl in background
+    if SYSTEM == "IBM" then
+        -- Windows: use start /b for background execution
+        os.execute('start /b "" ' .. curl_cmd)
+    else
+        -- macOS/Linux: use & for background
+        os.execute(curl_cmd .. " &")
+    end
+    
+    -- Mark as connected (we don't wait for response in async mode)
+    is_connected = true
+end
+
+-- Connect button handler
+local function connect()
+    if config.server_url == "" or config.callsign == "" then
+        XPLMSpeakString("Please fill in at least Server URL and Callsign")
+        return
+    end
+    
+    save_config()
+    
+    -- Try to send first request
+    send_position_data()
+    last_request_time = os.clock()
+end
+
+-- Disconnect button handler
+local function disconnect()
+    is_connected = false
+end
+
+-- Update touchdown velocity
+local function update_touchdown_velocity()
+    local on_ground = tonumber(sim_on_ground) or 0
+    local vertical_speed = tonumber(sim_vertical_speed) or 0
+    
+    -- Detect touchdown (transition from air to ground)
+    if on_ground == 1 and dataref_prev_on_ground == 0 then
+        -- Only capture if we have significant vertical speed (not already settled on ground)
+        if math.abs(vertical_speed) > 10 then
+            -- Vertical speed is already in feet per minute
+            last_touchdown_velocity = math.abs(vertical_speed)
+        end
+    elseif on_ground == 0 and dataref_prev_on_ground == 1 then
+        -- Reset touchdown velocity when taking off (leaving ground)
+        last_touchdown_velocity = 0
+    end
+    
+    dataref_prev_on_ground = on_ground
+end
+
+-- Draw the UI window using imgui
+function draw_window()
+    -- Safety check - make sure window exists
+    if not transmitter_window then
+        return
+    end
+    
+    -- Title
+    imgui.TextUnformatted("Transmitter XP Configuration")
+    imgui.Separator()
+    imgui.Spacing()
+    
+    -- Configuration fields (show as text when connected, editable when disconnected)
+    if is_connected then
+        imgui.TextUnformatted("Server URL: " .. config.server_url)
+        imgui.TextUnformatted("Callsign: " .. config.callsign)
+        imgui.TextUnformatted("Pilot Name: " .. config.pilot_name)
+        imgui.TextUnformatted("Group Name: " .. config.group_name)
+        imgui.TextUnformatted("Pin: " .. config.pin)
+        imgui.TextUnformatted("Notes: " .. config.notes)
+    else
+        local changed = false
+        changed, config.server_url = imgui.InputText("Server URL", config.server_url, 255)
+        changed, config.callsign = imgui.InputText("Callsign", config.callsign, 50)
+        changed, config.pilot_name = imgui.InputText("Pilot Name", config.pilot_name, 100)
+        changed, config.group_name = imgui.InputText("Group Name", config.group_name, 100)
+        changed, config.pin = imgui.InputText("Pin", config.pin, 50)
+        changed, config.notes = imgui.InputText("Notes", config.notes, 255)
+    end
+    
+    imgui.Spacing()
+    imgui.Separator()
+    imgui.Spacing()
+    
+    -- Connect/Disconnect buttons
+    if not is_connected then
+        if imgui.Button("Connect", 100, 30) then
+            connect()
+        end
+    else
+        if imgui.Button("Disconnect", 100, 30) then
+            disconnect()
+        end
+    end
+    
+    imgui.Spacing()
+    imgui.Separator()
+    imgui.Spacing()
+    
+    -- Status display
+    if is_connected then
+        imgui.TextUnformatted("Status: Connected - Sending data every second")
+        imgui.TextUnformatted("Touchdown Velocity: " .. string.format("%.0f", last_touchdown_velocity) .. " fpm")
+    else
+        imgui.TextUnformatted("Status: Disconnected")
+    end
+end
+
+-- Flight loop callback
+function flight_loop_callback()
+    -- Update touchdown velocity tracking
+    update_touchdown_velocity()
+    
+    -- Send position data if connected
+    if is_connected then
+        local current_time = os.clock()
+        local time_since_last = current_time - last_request_time
+        
+        if time_since_last >= request_interval then
+            send_position_data()
+            last_request_time = current_time
+        end
+    end
+end
+
+-- Register the flight loop to run every frame
+do_every_frame("flight_loop_callback()")
+
+-- Window close handler
+function close_transmitter_window()
+    if transmitter_window then
+        float_wnd_destroy(transmitter_window)
+        transmitter_window = nil
+    end
+end
+
+-- Show/create window function
+function show_transmitter_window()
+    if not transmitter_window then
+        transmitter_window = float_wnd_create(window_width, window_height, 1, true)
+        float_wnd_set_title(transmitter_window, "Transmitter XP")
+        float_wnd_set_imgui_builder(transmitter_window, "draw_window")
+        float_wnd_set_onclose(transmitter_window, "close_transmitter_window")
+    end
+end
+
+-- Load saved configuration on startup
+load_config()
+
+-- Create window initially
+show_transmitter_window()
+
+-- Create menu item in Plugins menu
+add_macro("Transmitter XP: Show Window", "show_transmitter_window()")
