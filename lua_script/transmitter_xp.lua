@@ -6,6 +6,7 @@
 PLUGIN_NAME = "Transmitter XP"
 PLUGIN_SIG = "virtualflight.transmitter_xp"
 PLUGIN_DESC = "Transmits aircraft position to VirtualFlight server"
+VERSION = "1.1"
 
 -- Configuration file path
 local config_file = "Output/preferences/transmitter_xp_config.txt"
@@ -158,9 +159,9 @@ local function establish_connection()
     connection_port = parsed.port or (parsed.scheme == "https" and 443 or 80)
     connection_path_base = parsed.path or "/"
     
-    -- Create TCP socket with brief timeout for connection
+    -- Create TCP socket with minimal timeout for connection
     tcp_connection = socket.tcp()
-    tcp_connection:settimeout(2)  -- 2 second timeout for connection only
+    tcp_connection:settimeout(0.2)  -- 200ms timeout - barely noticeable blocking
     
     -- Connect to server
     local success, err = tcp_connection:connect(connection_host, connection_port)
@@ -380,7 +381,7 @@ end
 function show_transmitter_window()
     if not transmitter_window then
         transmitter_window = float_wnd_create(window_width, window_height, 1, true)
-        float_wnd_set_title(transmitter_window, "Transmitter XP")
+        float_wnd_set_title(transmitter_window, "Transmitter XP v" .. VERSION)
         float_wnd_set_imgui_builder(transmitter_window, "draw_window")
         float_wnd_set_onclose(transmitter_window, "close_transmitter_window")
     end
