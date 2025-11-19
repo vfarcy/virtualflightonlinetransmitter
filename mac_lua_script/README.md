@@ -5,17 +5,19 @@ A FlyWithLua plugin for X-Plane 11 and X-Plane 12 that transmits real-time aircr
 ## Features
 
 - Real-time position transmission (every second)
+- Persistent HTTP connection for efficient data transmission
 - Configurable server URL, callsign, pilot name, and group
-- Aircraft data tracking (ICAO type, position, altitude, speed, heading)
+- Aircraft data tracking (ICAO type, position, altitude, speed, heading, transponder)
 - Automatic landing detection with touchdown velocity
 - Persistent configuration storage
 - Cross-platform support (Windows, macOS, Linux)
+- ImGui-based user interface
 
 ## Requirements
 
 - X-Plane 11 or X-Plane 12
 - FlyWithLua plugin (NG or NG+)
-- curl (pre-installed on macOS/Linux, included with Windows 10+)
+- LuaSocket (typically included with FlyWithLua)
 
 ## Installation
 
@@ -62,7 +64,7 @@ The Transmitter XP window will appear on your screen.
 
 Before your first flight, configure the following settings in the Transmitter XP window:
 
-1. **Server URL**: Default is `https://transmitter.virtualflight.online/transmit` (change only if using a custom server)
+1. **Server URL**: Default is `http://transmitter.virtualflight.online/transmit` (change only if using a custom server)
 2. **Callsign**: Your aircraft callsign (e.g., `N12345`, `AAL123`)
 3. **Pilot Name**: Your name or username
 4. **Group Name**: Default is `VirtualFlight.Online` (used for organizing flights)
@@ -119,11 +121,11 @@ The plugin sends the following aircraft data to the server:
 ### Data Not Transmitting
 
 - Verify your internet connection is active
-- Check that curl is available on your system:
-  - **Windows**: Open Command Prompt and type `curl --version`
-  - **macOS/Linux**: Open Terminal and type `curl --version`
-- Ensure the Server URL is correct
+- Ensure the Server URL is correct and accessible
+- Check that LuaSocket is properly installed with FlyWithLua
+- Try disconnecting and reconnecting to re-establish the connection
 - Check X-Plane's Log.txt for error messages
+- If connection fails, you should hear "Failed to connect" via text-to-speech
 
 ### Configuration Not Saving
 
@@ -132,11 +134,12 @@ The plugin sends the following aircraft data to the server:
 
 ### Performance Issues
 
-The plugin is designed to be lightweight and should have minimal impact on X-Plane performance. If you experience issues:
+The plugin is designed to be lightweight and should have minimal impact on X-Plane performance:
 
 - Transmission occurs only once per second
-- HTTP requests run in the background and don't block the simulator
-- You can disconnect transmission when not needed
+- Uses persistent HTTP connection to reduce overhead
+- Non-blocking I/O prevents simulator frame drops
+- You can disconnect transmission when not needed to free resources
 
 ## Uninstallation
 
@@ -150,19 +153,22 @@ To remove Transmitter XP:
 
 ## Technical Details
 
-### Platform Compatibility
-
-The script automatically detects your operating system and uses appropriate commands:
-
-- **Windows**: Uses `start /b` for background curl execution, `NUL` for output redirection
-- **macOS/Linux**: Uses `&` for background curl execution, `/dev/null` for output redirection
-
 ### Data Transmission Protocol
 
-- **Method**: HTTP GET request
+- **Method**: HTTP GET request over persistent TCP connection
 - **Format**: URL-encoded query parameters
 - **Frequency**: Once per second when connected
-- **Timeout**: None (fire-and-forget for performance)
+- **Connection**: HTTP/1.1 with keep-alive
+- **Timeout**: 5 seconds for initial connection, non-blocking for data transmission
+- **Library**: LuaSocket for TCP/HTTP communication
+
+### Connection Management
+
+The plugin maintains a persistent TCP connection to the server:
+- Connection is established when you click "Connect"
+- Same connection is reused for all transmissions (efficient)
+- Automatic reconnection attempt if connection drops
+- Connection is properly closed when you click "Disconnect"
 
 ### Landing Detection
 
@@ -183,8 +189,10 @@ This script is provided as-is for use with VirtualFlight.Online and X-Plane flig
 
 **Version 1.0**
 - Initial release
-- Real-time position transmission
+- Real-time position transmission using persistent HTTP connections
+- LuaSocket-based TCP communication (no external dependencies)
 - Configurable settings with persistent storage
 - Cross-platform support (Windows, macOS, Linux)
-- Landing detection with touchdown velocity
-- ImGui-based user interface
+- Landing detection with touchdown velocity tracking
+- ImGui-based user interface with editable/read-only state management
+- Automatic configuration save/load

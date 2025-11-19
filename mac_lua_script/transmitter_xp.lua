@@ -16,7 +16,7 @@ local window_height = 400
 
 -- Configuration variables
 local config = {
-    server_url = "https://transmitter.virtualflight.online/transmit",
+    server_url = "http://transmitter.virtualflight.online/transmit",
     callsign = "CALLSIGN",
     pilot_name = "Pilot Name",
     group_name = "VirtualFlight.Online",
@@ -31,6 +31,16 @@ local request_interval = 1.0 -- seconds
 
 -- Aircraft data
 local last_touchdown_velocity = 0
+
+-- Socket library
+local socket = require("socket")
+local url_lib = require("socket.url")
+
+-- Persistent connection
+local tcp_connection = nil
+local connection_host = nil
+local connection_port = nil
+local connection_path_base = nil
 
 -- Create dataref accessors (FlyWithLua style)
 dataref("aircraft_icao", "sim/aircraft/view/acf_ICAO", "readonly")
@@ -135,31 +145,69 @@ local function build_url()
     return url
 end
 
--- Send position data
+-- Establish persistent connection
+local function establish_connection()
+    -- Parse the server URL to get host, port, and base path
+    local parsed = url_lib.parse(config.server_url)
+    connection_host = parsed.host
+    connection_port = parsed.port or (parsed.scheme == "https" and 443 or 80)
+    connection_path_base = parsed.path or "/"
+    
+    -- Create TCP socket with timeout
+    tcp_connection = socket.tcp()
+    tcp_connection:settimeout(5)  -- 5 second timeout for initial connection
+    
+    -- Connect to server
+    local success, err = tcp_connection:connect(connection_host, connection_port)
+    if not success then
+        tcp_connection:close()
+        tcp_connection = nil
+        return false, err
+    end
+    
+    -- Set zero timeout for sends (non-blocking, instant)
+    tcp_connection:settimeout(0)
+    
+    return true
+end
+
+-- Send position data using persistent connection
 local function send_position_data()
+    -- Check if connection exists
+    if not tcp_connection then
+        return
+    end
+    
     local url = build_url()
     
-    -- Use curl to send HTTP GET request in background
-    local curl_cmd
-    if SYSTEM == "IBM" then
-        -- Windows - use different null device
-        curl_cmd = 'curl -s -o NUL -w "%%{http_code}" "' .. url .. '" 2>NUL'
-    else
-        -- macOS and Linux
-        curl_cmd = 'curl -s -o /dev/null -w "%{http_code}" "' .. url .. '" 2>/dev/null'
+    -- Extract query string from full URL
+    local parsed = url_lib.parse(url)
+    local path = connection_path_base
+    if parsed.query then
+        path = path .. "?" .. parsed.query
     end
     
-    -- Execute curl in background
-    if SYSTEM == "IBM" then
-        -- Windows: use start /b for background execution
-        os.execute('start /b "" ' .. curl_cmd)
-    else
-        -- macOS/Linux: use & for background
-        os.execute(curl_cmd .. " &")
-    end
+    -- Send HTTP GET request with keep-alive
+    local request = string.format(
+        "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: keep-alive\r\n\r\n",
+        path, connection_host
+    )
     
-    -- Mark as connected (we don't wait for response in async mode)
-    is_connected = true
+    local success, err = tcp_connection:send(request)
+    if not success then
+        -- Connection failed, try to reconnect
+        tcp_connection:close()
+        tcp_connection = nil
+        is_connected = false
+    end
+end
+
+-- Close persistent connection
+local function close_connection()
+    if tcp_connection then
+        tcp_connection:close()
+        tcp_connection = nil
+    end
 end
 
 -- Connect button handler
@@ -171,14 +219,22 @@ local function connect()
     
     save_config()
     
-    -- Try to send first request
-    send_position_data()
-    last_request_time = os.clock()
+    -- Establish persistent connection
+    local success, err = establish_connection()
+    if success then
+        is_connected = true
+        last_request_time = os.clock()
+        XPLMSpeakString("Connected to server")
+    else
+        XPLMSpeakString("Failed to connect: " .. (err or "unknown error"))
+        is_connected = false
+    end
 end
 
 -- Disconnect button handler
 local function disconnect()
     is_connected = false
+    close_connection()
 end
 
 -- Update touchdown velocity
