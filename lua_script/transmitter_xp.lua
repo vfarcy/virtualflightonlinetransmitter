@@ -158,20 +158,20 @@ local function establish_connection()
     connection_port = parsed.port or (parsed.scheme == "https" and 443 or 80)
     connection_path_base = parsed.path or "/"
     
-    -- Create TCP socket with zero timeout (non-blocking)
+    -- Create TCP socket with brief timeout for connection
     tcp_connection = socket.tcp()
-    tcp_connection:settimeout(0)
+    tcp_connection:settimeout(2)  -- 2 second timeout for connection only
     
-    -- Connect to server (non-blocking, returns immediately)
+    -- Connect to server
     local success, err = tcp_connection:connect(connection_host, connection_port)
-    
-    -- Non-blocking connect returns "timeout" on success (connection in progress)
-    -- or actual error if it failed immediately
-    if not success and err ~= "timeout" then
+    if not success then
         tcp_connection:close()
         tcp_connection = nil
         return false, err
     end
+    
+    -- Set zero timeout for sends (non-blocking)
+    tcp_connection:settimeout(0)
     
     return true
 end
