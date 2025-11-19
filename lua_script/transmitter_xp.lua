@@ -42,6 +42,11 @@ local connection_host = nil
 local connection_port = nil
 local connection_path_base = nil
 
+-- Logging function
+local function log_message(message)
+    logMsg("Transmitter XP: " .. message)
+end
+
 -- Create dataref accessors (FlyWithLua style)
 dataref("aircraft_icao", "sim/aircraft/view/acf_ICAO", "readonly")
 dataref("sim_latitude", "sim/flightmodel/position/latitude", "readonly")
@@ -175,12 +180,15 @@ end
 local function send_position_data()
     -- Check if connection exists, try to re-establish if needed
     if not tcp_connection then
+        log_message("Connection lost, attempting to reconnect...")
         local success, err = establish_connection()
         if not success then
             -- Failed to reconnect, disconnect user
+            log_message("Failed to reconnect: " .. (err or "unknown error") .. ". Connection permanently lost.")
             is_connected = false
             return
         end
+        log_message("Reconnection successful")
     end
     
     local url = build_url()
@@ -201,6 +209,7 @@ local function send_position_data()
     local success, err = tcp_connection:send(request)
     if not success then
         -- Connection failed, clean up and try once more
+        log_message("Send failed: " .. (err or "unknown error") .. ", attempting reconnection...")
         tcp_connection:close()
         tcp_connection = nil
         
@@ -211,12 +220,16 @@ local function send_position_data()
             success, err = tcp_connection:send(request)
             if not success then
                 -- Second attempt failed, disconnect user
+                log_message("Reconnection failed on second send attempt: " .. (err or "unknown error") .. ". Connection permanently lost.")
                 tcp_connection:close()
                 tcp_connection = nil
                 is_connected = false
+            else
+                log_message("Reconnection successful")
             end
         else
             -- Reconnection failed, disconnect user
+            log_message("Reconnection failed: " .. (reconnect_err or "unknown error") .. ". Connection permanently lost.")
             is_connected = false
         end
     end
@@ -244,8 +257,10 @@ local function connect()
     if success then
         is_connected = true
         last_request_time = os.clock()
+        log_message("Connected to server: " .. connection_host .. ":" .. connection_port)
         XPLMSpeakString("Connected to server")
     else
+        log_message("Failed to connect: " .. (err or "unknown error"))
         XPLMSpeakString("Failed to connect: " .. (err or "unknown error"))
         is_connected = false
     end
@@ -253,6 +268,7 @@ end
 
 -- Disconnect button handler
 local function disconnect()
+    log_message("User disconnected")
     is_connected = false
     close_connection()
 end
