@@ -183,9 +183,8 @@ local function send_position_data()
         log_message("Connection lost, attempting to reconnect...")
         local success, err = establish_connection()
         if not success then
-            -- Failed to reconnect, disconnect user
-            log_message("Failed to reconnect: " .. (err or "unknown error") .. ". Connection permanently lost.")
-            is_connected = false
+            -- Failed to reconnect, will try again next interval
+            log_message("Failed to reconnect: " .. (err or "unknown error") .. ". Will retry next interval.")
             return
         end
         log_message("Reconnection successful")
@@ -219,18 +218,16 @@ local function send_position_data()
             -- Try to send again with new connection
             success, err = tcp_connection:send(request)
             if not success then
-                -- Second attempt failed, disconnect user
-                log_message("Reconnection failed on second send attempt: " .. (err or "unknown error") .. ". Connection permanently lost.")
+                -- Second attempt failed, will retry next interval
+                log_message("Reconnection failed on second send attempt: " .. (err or "unknown error") .. ". Will retry next interval.")
                 tcp_connection:close()
                 tcp_connection = nil
-                is_connected = false
             else
                 log_message("Reconnection successful")
             end
         else
-            -- Reconnection failed, disconnect user
-            log_message("Reconnection failed: " .. (reconnect_err or "unknown error") .. ". Connection permanently lost.")
-            is_connected = false
+            -- Reconnection failed, will retry next interval
+            log_message("Reconnection failed: " .. (reconnect_err or "unknown error") .. ". Will retry next interval.")
         end
     end
 end
