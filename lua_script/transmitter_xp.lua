@@ -6,7 +6,7 @@
 PLUGIN_NAME = "Transmitter XP"
 PLUGIN_SIG = "virtualflight.transmitter_xp"
 PLUGIN_DESC = "Transmits aircraft position to VirtualFlight server"
-VERSION = "1.1"
+VERSION = "1.2"
 
 -- Configuration file path
 local config_file = "Output/preferences/transmitter_xp_config.txt"
@@ -118,11 +118,14 @@ local function build_url()
     -- Get position and flight data with safe defaults
     local latitude = tonumber(sim_latitude) or 0
     local longitude = tonumber(sim_longitude) or 0
-    local altitude = tonumber(sim_altitude) or 0
+    local altitude_meters = tonumber(sim_altitude) or 0
     local airspeed = tonumber(sim_airspeed) or 0
     local groundspeed_ms = tonumber(sim_groundspeed) or 0
     local heading = tonumber(sim_heading) or 0
     local transponder = tonumber(sim_transponder) or 0
+    
+    -- Convert altitude from meters to feet
+    local altitude = altitude_meters * 3.28084
     
     -- Convert groundspeed from m/s to knots
     local groundspeed = groundspeed_ms * 1.94384
