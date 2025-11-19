@@ -153,29 +153,34 @@ local function establish_connection()
     connection_port = parsed.port or (parsed.scheme == "https" and 443 or 80)
     connection_path_base = parsed.path or "/"
     
-    -- Create TCP socket with timeout
+    -- Create TCP socket with zero timeout (non-blocking)
     tcp_connection = socket.tcp()
-    tcp_connection:settimeout(5)  -- 5 second timeout for initial connection
+    tcp_connection:settimeout(0)
     
-    -- Connect to server
+    -- Connect to server (non-blocking, returns immediately)
     local success, err = tcp_connection:connect(connection_host, connection_port)
-    if not success then
+    
+    -- Non-blocking connect returns "timeout" on success (connection in progress)
+    -- or actual error if it failed immediately
+    if not success and err ~= "timeout" then
         tcp_connection:close()
         tcp_connection = nil
         return false, err
     end
-    
-    -- Set zero timeout for sends (non-blocking, instant)
-    tcp_connection:settimeout(0)
     
     return true
 end
 
 -- Send position data using persistent connection
 local function send_position_data()
-    -- Check if connection exists
+    -- Check if connection exists, try to re-establish if needed
     if not tcp_connection then
-        return
+        local success, err = establish_connection()
+        if not success then
+            -- Failed to reconnect, disconnect user
+            is_connected = false
+            return
+        end
     end
     
     local url = build_url()
@@ -195,10 +200,25 @@ local function send_position_data()
     
     local success, err = tcp_connection:send(request)
     if not success then
-        -- Connection failed, try to reconnect
+        -- Connection failed, clean up and try once more
         tcp_connection:close()
         tcp_connection = nil
-        is_connected = false
+        
+        -- Attempt immediate reconnection
+        local reconnect_success, reconnect_err = establish_connection()
+        if reconnect_success then
+            -- Try to send again with new connection
+            success, err = tcp_connection:send(request)
+            if not success then
+                -- Second attempt failed, disconnect user
+                tcp_connection:close()
+                tcp_connection = nil
+                is_connected = false
+            end
+        else
+            -- Reconnection failed, disconnect user
+            is_connected = false
+        end
     end
 end
 
