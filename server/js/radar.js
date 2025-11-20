@@ -14,6 +14,14 @@ class RadarDisplay {
         // Aircraft list management
         this.aircraftListVisible = false;
         this.aircraftListTable = null;
+        this.hiddenAircraft = new Set(); // Track which aircraft are hidden from radar
+        
+        // Position history trail
+        this.aircraftTrails = new Map(); // Store position history for each aircraft
+        this.trailLayers = new Map(); // Store trail circle markers
+        this.maxTrailLength = 10; // Keep last 10 positions
+        this.trailLayer = null; // Separate layer for trails to keep them below everything
+        this.trailsEnabled = false; // Trails off by default
         
         // Grid management
         this.gridVisible = false;
@@ -400,6 +408,13 @@ class RadarDisplay {
             zoomControl: false // Disable default zoom controls
         }).setView([39.8283, -98.5795], 4); // Center on USA
         
+        // Create a separate pane for trails so they appear below everything else
+        this.map.createPane('trailPane');
+        this.map.getPane('trailPane').style.zIndex = 350; // Below markers (400) and labels
+        
+        // Create trail layer group
+        this.trailLayer = L.layerGroup().addTo(this.map);
+        
         // Add initial tile layer
         this.loadTileLayer(this.currentTileLayerIndex);
         
@@ -624,10 +639,8 @@ class RadarDisplay {
     }
     
     createAircraftIcon(aircraft) {
-        const isMoving = aircraft.groundspeed > 10;
-        const iconHtml = isMoving ? 
-            '<i class="fas fa-plane aircraft-icon"></i>' : 
-            '<i class="fas fa-circle aircraft-icon"></i>';
+        // Always show aircraft as plane icon
+        const iconHtml = '<i class="fas fa-plane aircraft-icon"></i>';
         
         // Get aircraft color for current tile layer
         const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
@@ -728,6 +741,11 @@ class RadarDisplay {
         
         headingLine.addTo(this.map);
         this.headingLines.set(callsign, headingLine);
+        
+        // Apply hidden state if aircraft is hidden
+        if (this.hiddenAircraft.has(callsign)) {
+            this.applyAircraftVisibility(callsign);
+        }
     }
     
     createAircraftLabel(aircraft) {
@@ -840,12 +858,23 @@ class RadarDisplay {
             const labelGroup = this.createAircraftLabel(aircraft);
             labelGroup.addTo(this.map);
             this.labelLayers.set(callsign, labelGroup);
+            
+            // Apply hidden state if aircraft is hidden
+            if (this.hiddenAircraft.has(callsign)) {
+                this.applyAircraftVisibility(callsign);
+            }
         }
     }
     
     // Update label position when aircraft moves (for dragged labels)
     updateLabelPosition(aircraft) {
         const callsign = aircraft.callsign;
+        
+        // Don't update if aircraft is hidden
+        if (this.hiddenAircraft.has(callsign)) {
+            return;
+        }
+        
         if (!this.labelLayers.has(callsign) || !this.labelPixelPositions.has(callsign)) {
             return;
         }
@@ -869,6 +898,116 @@ class RadarDisplay {
             
             // Update marker position
             labelMarker.setLatLng(newLabelPosition);
+        }
+    }
+
+    // Aircraft Trail System
+    
+    updateAircraftTrail(callsign, position) {
+        // Don't create trails for hidden aircraft
+        if (this.hiddenAircraft.has(callsign)) {
+            return;
+        }
+        
+        // Initialize trail array for new aircraft
+        if (!this.aircraftTrails.has(callsign)) {
+            this.aircraftTrails.set(callsign, []);
+        }
+        
+        const trail = this.aircraftTrails.get(callsign);
+        
+        // Check if position has changed significantly (more than ~50 meters)
+        if (trail.length > 0) {
+            const lastPos = trail[trail.length - 1];
+            const distance = this.calculateDistance(lastPos[0], lastPos[1], position[0], position[1]);
+            if (distance < 0.0005) {
+                return; // Position hasn't changed enough, don't add
+            }
+        }
+        
+        // Add new position to trail - but this becomes a historical position
+        // We want to show where the aircraft WAS, not where it is now
+        // So we add the position BEFORE moving to the new one
+        if (trail.length > 0 || this.aircraftMarkers.has(callsign)) {
+            // Only add to trail if this isn't the very first position
+            // For first position, just initialize but don't draw
+            trail.push([position[0], position[1]]);
+            
+            // Keep only last 10 positions
+            if (trail.length > this.maxTrailLength) {
+                trail.shift();
+            }
+            
+            // Redraw trail markers
+            this.drawAircraftTrail(callsign);
+        }
+    }
+    
+    drawAircraftTrail(callsign) {
+        // Don't draw trails if disabled
+        if (!this.trailsEnabled) {
+            return;
+        }
+        
+        // Remove existing trail markers
+        if (this.trailLayers.has(callsign)) {
+            const existingTrails = this.trailLayers.get(callsign);
+            existingTrails.forEach(marker => {
+                this.trailLayer.removeLayer(marker);
+            });
+        }
+        
+        const trail = this.aircraftTrails.get(callsign);
+        if (!trail || trail.length <= 1) {
+            // Need at least 2 positions to show a trail (don't show current position)
+            return;
+        }
+        
+        // Get aircraft color for current tile layer
+        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
+        const aircraftColor = currentTileLayer.aircraftColor || '#00ff00';
+        
+        const trailMarkers = [];
+        
+        // Create markers for trail positions, excluding the most recent one (that's where aircraft is now)
+        // Show positions from oldest to second-most-recent
+        const historicalTrail = trail.slice(0, -1);
+        
+        historicalTrail.forEach((position, index) => {
+            // Calculate opacity: older positions are more transparent
+            // Oldest position gets lowest opacity, newest historical position gets highest
+            const opacity = ((index + 1) / historicalTrail.length) * 0.8; // 0.08 to 0.8
+            
+            const marker = L.circleMarker(position, {
+                radius: 1.5,
+                fillColor: aircraftColor,
+                color: aircraftColor,
+                weight: 0.5,
+                opacity: opacity,
+                fillOpacity: opacity,
+                pane: 'trailPane'
+            });
+            
+            marker.addTo(this.trailLayer);
+            trailMarkers.push(marker);
+        });
+        
+        this.trailLayers.set(callsign, trailMarkers);
+    }
+    
+    clearAircraftTrail(callsign) {
+        // Remove trail markers from map
+        if (this.trailLayers.has(callsign)) {
+            const trailMarkers = this.trailLayers.get(callsign);
+            trailMarkers.forEach(marker => {
+                this.trailLayer.removeLayer(marker);
+            });
+            this.trailLayers.delete(callsign);
+        }
+        
+        // Remove trail data
+        if (this.aircraftTrails.has(callsign)) {
+            this.aircraftTrails.delete(callsign);
         }
     }
 
@@ -1044,6 +1183,11 @@ class RadarDisplay {
     }
     
     updateLabelForSmoothMovement(callsign, aircraftPosition) {
+        // Don't update if aircraft is hidden
+        if (this.hiddenAircraft.has(callsign)) {
+            return;
+        }
+        
         // Only update labels if they should be visible at current zoom level
         const zoom = this.map.getZoom();
         if (zoom < 6) {
@@ -1162,6 +1306,9 @@ class RadarDisplay {
                 if (this.lastKnownAircraftPositions.has(callsign)) {
                     this.lastKnownAircraftPositions.delete(callsign);
                 }
+                
+                // Remove aircraft trail
+                this.clearAircraftTrail(callsign);
             }
         }
         
@@ -1169,6 +1316,9 @@ class RadarDisplay {
         aircraftData.forEach(aircraft => {
             const callsign = aircraft.callsign;
             const targetPosition = [aircraft.latitude, aircraft.longitude];
+            
+            // Update position trail
+            this.updateAircraftTrail(callsign, targetPosition);
             
             // Always setup aircraft movement data (needed for both smooth and non-smooth modes)
             this.setupAircraftMovement(aircraft, currentTime);
@@ -1194,7 +1344,13 @@ class RadarDisplay {
                     }
                 }
                 
-                marker.setIcon(this.createAircraftIcon(aircraft));
+                // Only update icon if heading has changed significantly (more than 5 degrees)
+                const oldData = marker.aircraftData;
+                if (!oldData || Math.abs(oldData.heading - aircraft.heading) > 5) {
+                    marker.setIcon(this.createAircraftIcon(aircraft));
+                }
+                
+                // Update popup content
                 marker.getPopup().setContent(this.createPopupContent(aircraft));
                 
                 // Store updated aircraft data on the marker
@@ -1220,6 +1376,11 @@ class RadarDisplay {
                 
                 marker.addTo(this.map);
                 this.aircraftMarkers.set(callsign, marker);
+                
+                // Apply hidden state if aircraft is hidden
+                if (this.hiddenAircraft.has(callsign)) {
+                    this.applyAircraftVisibility(callsign);
+                }
             }
             
             // Handle aircraft labels - avoid recreating during smooth movement to prevent stuttering
@@ -1332,6 +1493,11 @@ class RadarDisplay {
     // Recalculate all label positions after zoom change to maintain pixel distances
     recalculateAllLabelPositions() {
         for (const [callsign, marker] of this.aircraftMarkers) {
+            // Skip hidden aircraft
+            if (this.hiddenAircraft.has(callsign)) {
+                continue;
+            }
+            
             if (this.labelPixelPositions.has(callsign) && this.labelLayers.has(callsign)) {
                 const aircraftPos = marker.getLatLng();
                 const aircraftPosArray = [aircraftPos.lat, aircraftPos.lng];
@@ -1726,6 +1892,17 @@ class RadarDisplay {
             this.toggleSmoothMovement();
         });
         
+        const trailsBtn = document.createElement('button');
+        trailsBtn.className = 'toolbar-btn';
+        trailsBtn.innerHTML = '<i class="fas fa-route"></i>';
+        trailsBtn.title = 'Toggle Aircraft Trails (T)';
+        trailsBtn.id = 'trails-btn';
+        trailsBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleTrails();
+        });
+        
         const clearMeasurementsBtn = document.createElement('button');
         clearMeasurementsBtn.className = 'toolbar-btn';
         clearMeasurementsBtn.innerHTML = '<i class="fas fa-eraser"></i>';
@@ -1756,6 +1933,7 @@ class RadarDisplay {
         toolbar.appendChild(aircraftListBtn);
         toolbar.appendChild(gridBtn);
         toolbar.appendChild(smoothBtn);
+        toolbar.appendChild(trailsBtn);
         toolbar.appendChild(clearMeasurementsBtn);
         
         // Add separator
@@ -1776,6 +1954,8 @@ class RadarDisplay {
         this.updateLayersButton();
         this.updateGridButton();
         this.updateSmoothButton();
+        this.updateTrailsButton();
+        this.updateTrailsButton();
     }
     
     makeDraggable(element, handle) {
@@ -1910,6 +2090,11 @@ class RadarDisplay {
                 case 's':
                 case 'S':
                     this.toggleSmoothMovement();
+                    e.preventDefault();
+                    break;
+                case 't':
+                case 'T':
+                    this.toggleTrails();
                     e.preventDefault();
                     break;
                 case 'x':
@@ -2083,10 +2268,17 @@ class RadarDisplay {
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
         
-        const headers = ['', 'Callsign', 'Pilot', 'Aircraft', 'Altitude', 'Speed'];
+        const headers = ['', '', 'Callsign', 'Pilot', 'Aircraft', 'Altitude', 'Speed'];
         headers.forEach((headerText, index) => {
             const th = document.createElement('th');
             if (index === 0) {
+                // Visibility column header with icon
+                const visIcon = document.createElement('i');
+                visIcon.className = 'fas fa-plane';
+                visIcon.title = 'Toggle Visibility';
+                th.appendChild(visIcon);
+                th.className = 'visibility-column-header';
+            } else if (index === 1) {
                 // Track column header with icon
                 const trackIcon = document.createElement('i');
                 trackIcon.className = 'fas fa-crosshairs';
@@ -2111,13 +2303,64 @@ class RadarDisplay {
         container.appendChild(header);
         container.appendChild(tableContainer);
         
+        // Create resize handle
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'aircraft-list-resize-handle';
+        resizeHandle.innerHTML = '<i class="fas fa-grip-lines"></i>';
+        container.appendChild(resizeHandle);
+        
         // Add to radar container
         document.querySelector('.radar-container').appendChild(container);
         
         // Make draggable
         this.makeDraggable(container, dragHandle);
         
+        // Make resizable
+        this.makeResizable(container, resizeHandle);
+        
         this.aircraftListTable = container;
+    }
+    
+    makeResizable(element, handle) {
+        let isResizing = false;
+        let startX, startY, startWidth, startHeight;
+        
+        handle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = element.offsetWidth;
+            startHeight = element.offsetHeight;
+            e.preventDefault();
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+        
+        const onMouseMove = (e) => {
+            if (!isResizing) return;
+            
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            const newWidth = Math.max(400, startWidth + deltaX);
+            const newHeight = Math.max(200, startHeight + deltaY);
+            
+            element.style.width = newWidth + 'px';
+            element.style.minWidth = newWidth + 'px';
+            element.style.maxWidth = newWidth + 'px';
+            
+            const tableContainer = element.querySelector('.aircraft-list-table-container');
+            if (tableContainer) {
+                tableContainer.style.maxHeight = (newHeight - 60) + 'px';
+            }
+        };
+        
+        const onMouseUp = () => {
+            isResizing = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
     }
     
     updateAircraftListData() {
@@ -2142,13 +2385,34 @@ class RadarDisplay {
                 row.className = 'aircraft-row';
                 row.setAttribute('data-callsign', aircraft.callsign);
                 
-                // Add click handler to zoom to aircraft (excluding the track icon)
+                // Check if aircraft is hidden
+                const isHidden = this.hiddenAircraft.has(aircraft.callsign);
+                if (isHidden) {
+                    row.classList.add('aircraft-hidden');
+                }
+                
+                // Add click handler to zoom to aircraft (excluding icons)
                 row.addEventListener('click', (e) => {
-                    // Don't zoom if clicking on the track icon
-                    if (!e.target.closest('.track-icon')) {
+                    // Don't zoom if clicking on the visibility or track icons
+                    if (!e.target.closest('.visibility-icon') && !e.target.closest('.track-icon')) {
                         this.zoomToAircraft(aircraft.callsign);
                     }
                 });
+                
+                // Visibility toggle icon
+                const visibilityCell = document.createElement('td');
+                visibilityCell.className = 'visibility-cell';
+                const visibilityIcon = document.createElement('i');
+                visibilityIcon.className = isHidden ? 'fas fa-plane-slash visibility-icon' : 'fas fa-plane visibility-icon';
+                visibilityIcon.setAttribute('data-callsign', aircraft.callsign);
+                visibilityIcon.title = isHidden ? `Show ${aircraft.callsign} on radar` : `Hide ${aircraft.callsign} from radar`;
+                
+                visibilityIcon.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent row click
+                    this.toggleAircraftVisibility(aircraft.callsign);
+                });
+                visibilityCell.appendChild(visibilityIcon);
+                row.appendChild(visibilityCell);
                 
                 // Track icon
                 const trackCell = document.createElement('td');
@@ -2214,7 +2478,7 @@ class RadarDisplay {
             // No aircraft found
             const row = document.createElement('tr');
             const cell = document.createElement('td');
-            cell.colSpan = 6; // Updated to 6 columns (added track column)
+            cell.colSpan = 7; // Updated to 7 columns (visibility + track columns)
             cell.textContent = 'No aircraft online';
             cell.className = 'no-aircraft-cell';
             row.appendChild(cell);
@@ -2223,6 +2487,106 @@ class RadarDisplay {
         
         // Update tracking icon highlights after table is populated
         this.updateTrackingIconHighlights();
+    }
+    
+    toggleAircraftVisibility(callsign) {
+        const isCurrentlyHidden = this.hiddenAircraft.has(callsign);
+        
+        if (isCurrentlyHidden) {
+            // Show the aircraft
+            this.hiddenAircraft.delete(callsign);
+        } else {
+            // Hide the aircraft
+            this.hiddenAircraft.add(callsign);
+        }
+        
+        // Apply the visibility state
+        this.applyAircraftVisibility(callsign);
+        
+        // Update the aircraft list row immediately
+        const row = document.querySelector(`.aircraft-row[data-callsign="${callsign}"]`);
+        if (row) {
+            const visibilityIcon = row.querySelector('.visibility-icon');
+            
+            if (isCurrentlyHidden) {
+                // Aircraft is now visible
+                row.classList.remove('aircraft-hidden');
+                if (visibilityIcon) {
+                    visibilityIcon.className = 'fas fa-plane visibility-icon';
+                    visibilityIcon.title = `Hide ${callsign} from radar`;
+                }
+            } else {
+                // Aircraft is now hidden
+                row.classList.add('aircraft-hidden');
+                if (visibilityIcon) {
+                    visibilityIcon.className = 'fas fa-plane-slash visibility-icon';
+                    visibilityIcon.title = `Show ${callsign} on radar`;
+                }
+            }
+        }
+    }
+    
+    applyAircraftVisibility(callsign) {
+        // Centralized function to apply visibility state to all aircraft elements
+        const isHidden = this.hiddenAircraft.has(callsign);
+        const marker = this.aircraftMarkers.get(callsign);
+        const labelGroup = this.labelLayers.get(callsign);
+        const headingLine = this.headingLines.get(callsign);
+        
+        console.log(`Applying visibility for ${callsign}: hidden=${isHidden}`);
+        
+        // Apply to marker
+        if (marker) {
+            if (isHidden) {
+                if (this.map.hasLayer(marker)) {
+                    this.map.removeLayer(marker);
+                }
+            } else {
+                if (!this.map.hasLayer(marker)) {
+                    marker.addTo(this.map);
+                }
+            }
+        }
+        
+        // Apply to label and connecting line
+        if (labelGroup) {
+            if (isHidden) {
+                if (this.map.hasLayer(labelGroup)) {
+                    this.map.removeLayer(labelGroup);
+                }
+            } else {
+                if (!this.map.hasLayer(labelGroup)) {
+                    labelGroup.addTo(this.map);
+                }
+            }
+        }
+        
+        // Apply to heading line
+        if (headingLine) {
+            if (isHidden) {
+                if (this.map.hasLayer(headingLine)) {
+                    this.map.removeLayer(headingLine);
+                }
+            } else {
+                if (!this.map.hasLayer(headingLine)) {
+                    headingLine.addTo(this.map);
+                }
+            }
+        }
+        
+        // Apply to trail
+        if (isHidden) {
+            // Hide trail by removing it
+            if (this.trailLayers.has(callsign)) {
+                const trailMarkers = this.trailLayers.get(callsign);
+                trailMarkers.forEach(marker => {
+                    this.trailLayer.removeLayer(marker);
+                });
+            }
+        } else {
+            // Show trail by redrawing it
+            this.drawAircraftTrail(callsign);
+        }
     }
     
     zoomToAircraft(callsign) {
@@ -2300,6 +2664,55 @@ class RadarDisplay {
         }
         
         console.log(`Smooth movement ${this.smoothMovementEnabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    toggleTrails() {
+        this.trailsEnabled = !this.trailsEnabled;
+        
+        // Update the button appearance
+        this.updateTrailsButton();
+        
+        if (this.trailsEnabled) {
+            // Redraw all existing trails
+            for (const callsign of this.aircraftTrails.keys()) {
+                this.drawAircraftTrail(callsign);
+            }
+        } else {
+            // Clear all trail markers from display
+            for (const [callsign, markers] of this.trailLayers) {
+                markers.forEach(marker => {
+                    this.trailLayer.removeLayer(marker);
+                });
+            }
+            this.trailLayers.clear();
+        }
+        
+        console.log(`Aircraft trails ${this.trailsEnabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    updateTrailsButton() {
+        const btn = document.getElementById('trails-btn');
+        
+        if (btn) {
+            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
+            const enabledBackground = currentTileLayer.accentColor || currentTileLayer.primaryColor || '#00ff00';
+            const disabledBackground = currentTileLayer.backgroundColor || 'rgba(0, 40, 80, 0.8)';
+            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            
+            if (this.trailsEnabled) {
+                btn.style.background = enabledBackground;
+                btn.style.color = '#ffffff'; // White text on colored background
+                btn.style.borderColor = enabledBackground;
+                btn.innerHTML = '<i class="fas fa-route"></i>';
+                btn.title = 'Disable Aircraft Trails (T)';
+            } else {
+                btn.style.background = disabledBackground;
+                btn.style.color = textColor;
+                btn.style.borderColor = textColor;
+                btn.innerHTML = '<i class="fas fa-route"></i>';
+                btn.title = 'Enable Aircraft Trails (T)';
+            }
+        }
     }
     
     updateSmoothButton() {
