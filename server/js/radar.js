@@ -69,6 +69,156 @@ class RadarDisplay {
         this.mapboxStyleId = 'streets-v12';
         this.mapboxDialogOpen = false;
         
+        // Color scheme configuration
+        this.currentColorScheme = 'green'; // default
+        this.colorSchemes = {
+            'green': {
+                name: 'Radar Green',
+                foreground: '#00ff00',
+                background: 'rgba(0, 20, 40, 0.95)',
+                highlight: '#00ffff',
+                // Derived colors
+                aircraftColor: '#00ff00',
+                labelBackground: 'rgba(0, 20, 40, 0.95)',
+                labelTextColor: '#00ff00',
+                labelBorderColor: '#00ff00',
+                labelLineColor: '#00ff00',
+                primaryColor: '#00ff00',
+                secondaryColor: '#88ff88',
+                accentColor: '#00ffff',
+                backgroundColor: 'rgba(0, 20, 40, 0.95)',
+                secondaryBackground: 'rgba(0, 40, 80, 0.8)',
+                borderColor: '#00ff00',
+                hoverColor: 'rgba(0, 60, 120, 0.9)',
+                textColor: '#00ff00',
+                shadowColor: 'rgba(0, 255, 0, 0.3)',
+                gridColor: '#00ff00',
+                gridMajorColor: '#00ff00',
+                gridMinorColor: 'rgba(0, 255, 0, 0.3)',
+                popupBackground: 'rgba(0, 20, 40, 0.95)',
+                popupTextColor: '#00ff00',
+                popupBorderColor: '#00ff00',
+                trackingHighlightColor: '#ff6600',
+                trackingHighlightBackground: 'rgb(255, 102, 0)'
+            },
+            'white': {
+                name: 'White',
+                foreground: '#ffffff',
+                background: 'rgba(0, 0, 0, 0.9)',
+                highlight: '#ffff00',
+                // Derived colors
+                aircraftColor: '#ffffff',
+                labelBackground: 'rgba(0, 0, 0, 0.9)',
+                labelTextColor: '#ffffff',
+                labelBorderColor: '#ffffff',
+                labelLineColor: '#ffffff',
+                primaryColor: '#ffffff',
+                secondaryColor: '#dddddd',
+                accentColor: '#ffff00',
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                secondaryBackground: 'rgba(40, 40, 40, 0.8)',
+                borderColor: '#ffffff',
+                hoverColor: 'rgba(80, 80, 80, 0.9)',
+                textColor: '#ffffff',
+                shadowColor: 'rgba(255, 255, 255, 0.3)',
+                gridColor: '#ffffff',
+                gridMajorColor: '#ffffff',
+                gridMinorColor: 'rgba(255, 255, 255, 0.3)',
+                popupBackground: 'rgba(0, 0, 0, 0.9)',
+                popupTextColor: '#ffffff',
+                popupBorderColor: '#ffffff',
+                trackingHighlightColor: '#ffff00',
+                trackingHighlightBackground: 'rgb(255, 255, 0)'
+            },
+            'black': {
+                name: 'Black',
+                foreground: '#000000',
+                background: 'rgba(255, 255, 255, 0.95)',
+                highlight: '#ff0000',
+                // Derived colors
+                aircraftColor: '#000000',
+                labelBackground: 'rgba(255, 255, 255, 0.95)',
+                labelTextColor: '#000000',
+                labelBorderColor: '#000000',
+                labelLineColor: '#000000',
+                primaryColor: '#000000',
+                secondaryColor: '#333333',
+                accentColor: '#ff0000',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                secondaryBackground: 'rgba(240, 240, 240, 0.9)',
+                borderColor: '#000000',
+                hoverColor: 'rgba(200, 200, 200, 0.9)',
+                textColor: '#000000',
+                shadowColor: 'rgba(0, 0, 0, 0.3)',
+                gridColor: '#000000',
+                gridMajorColor: '#000000',
+                gridMinorColor: 'rgba(0, 0, 0, 0.3)',
+                popupBackground: 'rgba(255, 255, 255, 0.95)',
+                popupTextColor: '#000000',
+                popupBorderColor: '#000000',
+                trackingHighlightColor: '#ff0000',
+                trackingHighlightBackground: 'rgb(255, 0, 0)'
+            },
+            'blue': {
+                name: 'Blue',
+                foreground: '#2563eb',
+                background: 'rgba(255, 255, 255, 0.95)',
+                highlight: '#60a5fa',
+                // Derived colors
+                aircraftColor: '#2563eb',
+                labelBackground: 'rgba(255, 255, 255, 0.95)',
+                labelTextColor: '#1e40af',
+                labelBorderColor: '#2563eb',
+                labelLineColor: '#2563eb',
+                primaryColor: '#2563eb',
+                secondaryColor: '#3b82f6',
+                accentColor: '#60a5fa',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                secondaryBackground: 'rgba(248, 250, 252, 0.9)',
+                borderColor: '#2563eb',
+                hoverColor: 'rgba(59, 130, 246, 0.9)',
+                textColor: '#1e40af',
+                shadowColor: 'rgba(37, 99, 235, 0.3)',
+                gridColor: '#2563eb',
+                gridMajorColor: '#2563eb',
+                gridMinorColor: 'rgba(37, 99, 235, 0.3)',
+                popupBackground: 'rgba(255, 255, 255, 0.95)',
+                popupTextColor: '#1e40af',
+                popupBorderColor: '#2563eb',
+                trackingHighlightColor: '#60a5fa',
+                trackingHighlightBackground: 'rgb(96, 165, 250)'
+            },
+            'red': {
+                name: 'Red',
+                foreground: '#dc2626',
+                background: 'rgba(0, 0, 0, 0.9)',
+                highlight: '#fca5a5',
+                // Derived colors
+                aircraftColor: '#dc2626',
+                labelBackground: 'rgba(0, 0, 0, 0.9)',
+                labelTextColor: '#dc2626',
+                labelBorderColor: '#dc2626',
+                labelLineColor: '#dc2626',
+                primaryColor: '#dc2626',
+                secondaryColor: '#ef4444',
+                accentColor: '#fca5a5',
+                backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                secondaryBackground: 'rgba(40, 0, 0, 0.8)',
+                borderColor: '#dc2626',
+                hoverColor: 'rgba(80, 0, 0, 0.9)',
+                textColor: '#dc2626',
+                shadowColor: 'rgba(220, 38, 38, 0.3)',
+                gridColor: '#dc2626',
+                gridMajorColor: '#dc2626',
+                gridMinorColor: 'rgba(220, 38, 38, 0.3)',
+                popupBackground: 'rgba(0, 0, 0, 0.9)',
+                popupTextColor: '#dc2626',
+                popupBorderColor: '#dc2626',
+                trackingHighlightColor: '#fca5a5',
+                trackingHighlightBackground: 'rgb(252, 165, 165)'
+            }
+        };
+        
         // Tile layer configuration
         this.currentTileLayerIndex = 0;
         this.currentTileLayer = null;
@@ -379,6 +529,12 @@ class RadarDisplay {
             this.mapboxStyleId = savedStyleId;
         }
         
+        // Load color scheme from cookie
+        const savedColorScheme = this.getCookie('colorScheme');
+        if (savedColorScheme && this.colorSchemes[savedColorScheme]) {
+            this.currentColorScheme = savedColorScheme;
+        }
+        
         this.parseUrlParameters();
         this.initMap();
         this.startRadarUpdates();
@@ -492,11 +648,8 @@ class RadarDisplay {
         // Update aircraft colors for the new tile layer
         this.updateAircraftColors();
         
-        // Update interface colors to match the new tile layer
-        this.updateInterfaceColors();
-        
-        // Update interface colors to match the new tile layer
-        this.updateInterfaceColors();
+        // Apply the current color scheme instead of tile layer colors
+        this.applyColorScheme();
     }
     
     updateLayersButton() {
@@ -626,9 +779,9 @@ class RadarDisplay {
         // Always show aircraft as plane icon
         const iconHtml = '<i class="fas fa-plane aircraft-icon"></i>';
         
-        // Get aircraft color for current tile layer
-        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-        const aircraftColor = currentTileLayer.aircraftColor || '#ff6b35'; // Default orange
+        // Get aircraft color from current color scheme
+        const colors = this.colorSchemes[this.currentColorScheme];
+        const aircraftColor = colors.aircraftColor;
         
         // Calculate rotation angle (heading - 90 degrees to align with north)
         let rotationAngle = aircraft.heading - 90;
@@ -647,11 +800,11 @@ class RadarDisplay {
         const trackingIcon = isTracked ? '🎯' : '📍';
         const trackingText = isTracked ? 'Stop Tracking' : 'Track Aircraft';
         
-        // Get colors from current tile layer
-        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-        const primaryColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
-        const secondaryColor = currentTileLayer.secondaryColor || '#88ff88';
-        const accentColor = currentTileLayer.accentColor || '#00ffff';
+        // Get colors from current color scheme
+        const colors = this.colorSchemes[this.currentColorScheme];
+        const primaryColor = colors.primaryColor;
+        const secondaryColor = colors.secondaryColor;
+        const accentColor = colors.accentColor;
         const trackingColor = isTracked ? '#ff6b6b' : accentColor;
         
         return `
@@ -709,9 +862,9 @@ class RadarDisplay {
         const endLat = startLat + (distance * Math.cos(heading));
         const endLng = startLng + (distance * Math.sin(heading));
         
-        // Get aircraft color for current tile layer and make heading line slightly different
-        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-        const baseColor = currentTileLayer.aircraftColor || '#ff6b35';
+        // Get aircraft color for current color scheme and make heading line slightly different
+        const colors = this.colorSchemes[this.currentColorScheme];
+        const baseColor = colors.aircraftColor;
         const headingLineColor = this.getHeadingLineColor(baseColor);
         
         const headingLine = L.polyline([
@@ -736,12 +889,12 @@ class RadarDisplay {
         const callsign = aircraft.callsign;
         const position = [aircraft.latitude, aircraft.longitude];
         
-        // Get label colors from current tile layer
-        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-        const labelTextColor = currentTileLayer.labelTextColor || currentTileLayer.aircraftColor || '#ff6b35';
-        const labelBackground = currentTileLayer.labelBackground || 'rgb(0, 20, 40)';
-        const labelBorderColor = currentTileLayer.labelBorderColor || currentTileLayer.aircraftColor || '#ff6b35';
-        const labelLineColor = currentTileLayer.labelLineColor || currentTileLayer.aircraftColor || '#ff6b35';
+        // Get label colors from current color scheme
+        const colors = this.colorSchemes[this.currentColorScheme];
+        const labelTextColor = colors.labelTextColor;
+        const labelBackground = colors.labelBackground;
+        const labelBorderColor = colors.labelBorderColor;
+        const labelLineColor = colors.labelLineColor;
         
         // Get pixel offset for this aircraft (either saved or default)
         let pixelOffset;
@@ -947,9 +1100,9 @@ class RadarDisplay {
             return;
         }
         
-        // Get aircraft color for current tile layer
-        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-        const aircraftColor = currentTileLayer.aircraftColor || '#00ff00';
+        // Get aircraft color for current color scheme
+        const colors = this.colorSchemes[this.currentColorScheme];
+        const aircraftColor = colors.aircraftColor;
         
         const trailMarkers = [];
         
@@ -1643,11 +1796,11 @@ class RadarDisplay {
         const minLng = Math.floor(bounds.getWest() / lngSpacing) * lngSpacing;
         const maxLng = Math.ceil(bounds.getEast() / lngSpacing) * lngSpacing;
         
-        // Get grid colors from current tile layer
-        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-        const gridMajorColor = currentTileLayer.gridMajorColor || currentTileLayer.primaryColor || '#00ff00';
-        const gridMinorColor = currentTileLayer.gridMinorColor || 'rgba(0, 255, 0, 0.3)';
-        const gridTextColor = currentTileLayer.textColor || currentTileLayer.primaryColor || '#00ff00';
+        // Get grid colors from current color scheme
+        const colors = this.colorSchemes[this.currentColorScheme];
+        const gridMajorColor = colors.gridMajorColor;
+        const gridMinorColor = colors.gridMinorColor;
+        const gridTextColor = colors.textColor;
         
         // Create latitude lines (horizontal)
         for (let lat = minLat; lat <= maxLat; lat += latSpacing) {
@@ -1766,10 +1919,10 @@ class RadarDisplay {
     updateGridButton() {
         const btn = document.getElementById('grid-btn');
         if (btn) {
-            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-            const enabledBackground = currentTileLayer.accentColor || currentTileLayer.primaryColor || '#00ff00';
-            const disabledBackground = currentTileLayer.backgroundColor || 'rgba(0, 40, 80, 0.8)';
-            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            const colors = this.colorSchemes[this.currentColorScheme];
+            const enabledBackground = colors.accentColor;
+            const disabledBackground = colors.backgroundColor;
+            const textColor = colors.primaryColor;
             
             if (this.gridVisible) {
                 btn.style.background = enabledBackground;
@@ -1918,6 +2071,17 @@ class RadarDisplay {
             this.clearAllMeasurements();
         });
         
+        const paletteBtn = document.createElement('button');
+        paletteBtn.className = 'toolbar-btn';
+        paletteBtn.innerHTML = '<i class="fas fa-palette"></i>';
+        paletteBtn.title = 'Color Scheme (P)';
+        paletteBtn.id = 'palette-btn';
+        paletteBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.openColorSchemeDialog();
+        });
+        
         // Add drag handle
         const dragHandle = document.createElement('div');
         dragHandle.className = 'toolbar-drag-handle';
@@ -1941,7 +2105,6 @@ class RadarDisplay {
         toolbar.appendChild(smoothBtn);
         toolbar.appendChild(trailsBtn);
         toolbar.appendChild(weatherBtn);
-        toolbar.appendChild(mapboxBtn);
         toolbar.appendChild(clearMeasurementsBtn);
         
         // Add separator
@@ -1950,6 +2113,8 @@ class RadarDisplay {
         toolbar.appendChild(separator2);
         
         toolbar.appendChild(layersBtn);
+        toolbar.appendChild(mapboxBtn);
+        toolbar.appendChild(paletteBtn);
         toolbar.appendChild(fullscreenBtn);
         
         // Add toolbar to the radar container
@@ -2113,6 +2278,11 @@ class RadarDisplay {
                 case 'm':
                 case 'M':
                     this.openMapBoxDialog();
+                    e.preventDefault();
+                    break;
+                case 'p':
+                case 'P':
+                    this.openColorSchemeDialog();
                     e.preventDefault();
                     break;
                 case 'x':
@@ -2622,10 +2792,10 @@ class RadarDisplay {
     updateAircraftListButton() {
         const btn = document.getElementById('aircraft-list-btn');
         if (btn) {
-            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-            const enabledBackground = currentTileLayer.accentColor || currentTileLayer.primaryColor || '#00ff00';
-            const disabledBackground = currentTileLayer.backgroundColor || 'rgba(0, 40, 80, 0.8)';
-            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            const colors = this.colorSchemes[this.currentColorScheme];
+            const enabledBackground = colors.accentColor;
+            const disabledBackground = colors.backgroundColor;
+            const textColor = colors.primaryColor;
             
             if (this.aircraftListVisible) {
                 btn.style.background = enabledBackground;
@@ -2705,10 +2875,10 @@ class RadarDisplay {
         const btn = document.getElementById('trails-btn');
         
         if (btn) {
-            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-            const enabledBackground = currentTileLayer.accentColor || currentTileLayer.primaryColor || '#00ff00';
-            const disabledBackground = currentTileLayer.backgroundColor || 'rgba(0, 40, 80, 0.8)';
-            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            const colors = this.colorSchemes[this.currentColorScheme];
+            const enabledBackground = colors.accentColor;
+            const disabledBackground = colors.backgroundColor;
+            const textColor = colors.primaryColor;
             
             if (this.trailsEnabled) {
                 btn.style.background = enabledBackground;
@@ -2743,10 +2913,10 @@ class RadarDisplay {
         const btn = document.getElementById('weather-btn');
         
         if (btn) {
-            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-            const enabledBackground = currentTileLayer.accentColor || currentTileLayer.primaryColor || '#00ff00';
-            const disabledBackground = currentTileLayer.backgroundColor || 'rgba(0, 40, 80, 0.8)';
-            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            const colors = this.colorSchemes[this.currentColorScheme];
+            const enabledBackground = colors.accentColor;
+            const disabledBackground = colors.backgroundColor;
+            const textColor = colors.primaryColor;
             
             if (this.weatherRadarEnabled) {
                 btn.style.background = enabledBackground;
@@ -2821,10 +2991,10 @@ class RadarDisplay {
         const status = document.getElementById('smooth-status');
         
         if (btn) {
-            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-            const enabledBackground = currentTileLayer.accentColor || currentTileLayer.primaryColor || '#00ff00';
-            const disabledBackground = currentTileLayer.backgroundColor || 'rgba(0, 40, 80, 0.8)';
-            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            const colors = this.colorSchemes[this.currentColorScheme];
+            const enabledBackground = colors.accentColor;
+            const disabledBackground = colors.backgroundColor;
+            const textColor = colors.primaryColor;
             
             if (this.smoothMovementEnabled) {
                 btn.style.background = enabledBackground;
@@ -2843,9 +3013,9 @@ class RadarDisplay {
         
         if (status) {
             status.textContent = this.smoothMovementEnabled ? 'Enabled' : 'Disabled';
-            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-            const enabledColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
-            const disabledColor = currentTileLayer.accentColor || '#ff6600';
+            const colors = this.colorSchemes[this.currentColorScheme];
+            const enabledColor = colors.primaryColor;
+            const disabledColor = colors.accentColor;
             status.style.color = this.smoothMovementEnabled ? enabledColor : disabledColor;
         }
     }
@@ -2873,12 +3043,12 @@ class RadarDisplay {
             const labelMarker = layers[1]; // Marker is second
             
             try {
-                // Get current tile layer colors
-                const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-                const labelTextColor = currentTileLayer.labelTextColor || currentTileLayer.aircraftColor || '#ff6b35';
-                const labelBackground = currentTileLayer.labelBackground || 'rgb(0, 20, 40)';
-                const labelBorderColor = currentTileLayer.labelBorderColor || currentTileLayer.aircraftColor || '#ff6b35';
-                const labelLineColor = currentTileLayer.labelLineColor || currentTileLayer.aircraftColor || '#ff6b35';
+                // Get current color scheme colors
+                const colors = this.colorSchemes[this.currentColorScheme];
+                const labelTextColor = colors.labelTextColor;
+                const labelBackground = colors.labelBackground;
+                const labelBorderColor = colors.labelBorderColor;
+                const labelLineColor = colors.labelLineColor;
                 
                 // Create updated label content with dynamic colors
                 const updatedLabelText = `
@@ -3487,11 +3657,11 @@ class RadarDisplay {
             const markerElement = marker.getElement();
             if (markerElement) {
                 markerElement.classList.remove('tracked-aircraft');
-                // Reset to normal color for this tile layer
+                // Reset to normal color for this color scheme
                 const iconElement = markerElement.querySelector('.aircraft-icon');
                 if (iconElement && marker.aircraftData) {
-                    const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-                    const normalColor = currentTileLayer.aircraftColor || '#ff6b35';
+                    const colors = this.colorSchemes[this.currentColorScheme];
+                    const normalColor = colors.aircraftColor;
                     iconElement.style.color = normalColor;
                     iconElement.style.filter = `drop-shadow(0 0 3px ${normalColor})`;
                 }
@@ -3500,9 +3670,9 @@ class RadarDisplay {
             // Also reset label colors to normal
             const labelGroup = this.labelLayers.get(markerCallsign);
             if (labelGroup && marker.aircraftData) {
-                const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-                const normalColor = currentTileLayer.aircraftColor || '#ff6b35';
-                const normalBackground = currentTileLayer.labelBackground || 'rgb(0, 20, 40)';
+                const colors = this.colorSchemes[this.currentColorScheme];
+                const normalColor = colors.aircraftColor;
+                const normalBackground = colors.labelBackground;
                 const labelLineColor = normalColor; // Use same color as aircraft
                 
                 labelGroup.eachLayer((layer) => {
@@ -3539,9 +3709,9 @@ class RadarDisplay {
                 markerElement.classList.add('tracked-aircraft');
                 const iconElement = markerElement.querySelector('.aircraft-icon');
                 if (iconElement) {
-                    // Use tracking highlight color from tile layer
-                    const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-                    const highlightColor = currentTileLayer.trackingHighlightColor || '#ff6600';
+                    // Use tracking highlight color from color scheme
+                    const colors = this.colorSchemes[this.currentColorScheme];
+                    const highlightColor = colors.trackingHighlightColor;
                     iconElement.style.color = highlightColor;
                     iconElement.style.filter = `drop-shadow(0 0 8px ${highlightColor}) drop-shadow(0 0 12px ${highlightColor})`;
                 }
@@ -3558,10 +3728,10 @@ class RadarDisplay {
                     if (labelElement) {
                         const labelDiv = labelElement.querySelector('div');
                         if (labelDiv) {
-                            // Highlight the label with tracking colors from tile layer
-                            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-                            const highlightColor = currentTileLayer.trackingHighlightColor || '#ff6600';
-                            const highlightBackground = currentTileLayer.trackingHighlightBackground || 'rgb(255, 102, 0)';
+                            // Highlight the label with tracking colors from color scheme
+                            const colors = this.colorSchemes[this.currentColorScheme];
+                            const highlightColor = colors.trackingHighlightColor;
+                            const highlightBackground = colors.trackingHighlightBackground;
                             labelDiv.style.color = '#ffffff';
                             labelDiv.style.backgroundColor = highlightBackground;
                             labelDiv.style.borderColor = highlightColor;
@@ -3570,8 +3740,8 @@ class RadarDisplay {
                     }
                 } else if (layer instanceof L.Polyline) {
                     // This is the connecting line
-                    const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-                    const highlightColor = currentTileLayer.trackingHighlightColor || '#ff6600';
+                    const colors = this.colorSchemes[this.currentColorScheme];
+                    const highlightColor = colors.trackingHighlightColor;
                     layer.setStyle({
                         color: highlightColor,
                         opacity: 0.9,
@@ -3588,11 +3758,11 @@ class RadarDisplay {
     updateTrackingIndicator(found) {
         const indicator = document.getElementById('tracking-indicator');
         if (indicator) {
-            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
-            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            const colors = this.colorSchemes[this.currentColorScheme];
+            const textColor = colors.primaryColor;
             
             if (found) {
-                const successBackground = currentTileLayer.accentColor || '#4CAF50';
+                const successBackground = colors.accentColor;
                 indicator.style.background = successBackground;
                 indicator.style.borderColor = successBackground;
                 indicator.style.color = '#ffffff';
@@ -3604,7 +3774,7 @@ class RadarDisplay {
                     </button>
                 `;
             } else {
-                const errorBackground = currentTileLayer.trackingHighlightColor || '#f44336';
+                const errorBackground = colors.trackingHighlightColor;
                 indicator.style.background = errorBackground;
                 indicator.style.borderColor = errorBackground;
                 indicator.style.color = '#ffffff';
@@ -3759,30 +3929,59 @@ class RadarDisplay {
         });
     }
 
-    updateInterfaceColors() {
-        // Update all interface elements to match the current tile layer colors
-        const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
+    updateInterfaceColors(colorMapping) {
+        // If color mapping is provided, use it; otherwise read from current tile layer
+        let colors;
         
-        // Use colors directly from tile layer configuration
-        const colors = {
-            primary: currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00',
-            secondary: currentTileLayer.secondaryColor || '#88ff88',
-            accent: currentTileLayer.accentColor || '#00ffff',
-            background: currentTileLayer.backgroundColor || 'rgba(0, 20, 40, 0.95)',
-            secondaryBg: currentTileLayer.secondaryBackground || 'rgba(0, 40, 80, 0.8)',
-            border: currentTileLayer.borderColor || currentTileLayer.primaryColor || '#00ff00',
-            hover: currentTileLayer.hoverColor || 'rgba(0, 60, 120, 0.9)',
-            text: currentTileLayer.textColor || currentTileLayer.primaryColor || '#00ff00',
-            shadow: currentTileLayer.shadowColor || 'rgba(0, 255, 0, 0.3)',
-            grid: currentTileLayer.gridColor || currentTileLayer.primaryColor || '#00ff00',
-            gridMajor: currentTileLayer.gridMajorColor || currentTileLayer.primaryColor || '#00ff00',
-            gridMinor: currentTileLayer.gridMinorColor || 'rgba(0, 255, 0, 0.3)',
-            popupBg: currentTileLayer.popupBackground || currentTileLayer.backgroundColor || 'rgba(0, 20, 40, 0.95)',
-            popupText: currentTileLayer.popupTextColor || currentTileLayer.primaryColor || '#00ff00',
-            popupBorder: currentTileLayer.popupBorderColor || currentTileLayer.borderColor || '#00ff00',
-            trackingHighlight: currentTileLayer.trackingHighlightColor || '#ff6600',
-            trackingHighlightBg: currentTileLayer.trackingHighlightBackground || 'rgb(255, 102, 0)'
-        };
+        if (colorMapping) {
+            // Use provided color mapping
+            colors = {
+                primary: colorMapping.primaryColor,
+                secondary: colorMapping.secondaryColor,
+                accent: colorMapping.accentColor,
+                background: colorMapping.backgroundColor,
+                secondaryBg: colorMapping.secondaryBg,
+                border: colorMapping.borderColor,
+                hover: colorMapping.hoverColor,
+                text: colorMapping.textColor,
+                shadow: colorMapping.shadowColor,
+                grid: colorMapping.gridColor,
+                gridMajor: colorMapping.gridMajorColor,
+                gridMinor: colorMapping.gridMinorColor,
+                popupBg: colorMapping.popupBg,
+                popupText: colorMapping.popupText,
+                popupBorder: colorMapping.popupBorder,
+                trackingHighlight: '#ff6600',
+                trackingHighlightBg: 'rgb(255, 102, 0)',
+                aircraftColor: colorMapping.aircraftColor,
+                labelBg: colorMapping.labelBg,
+                labelText: colorMapping.labelText,
+                labelBorder: colorMapping.labelBorder,
+                labelLine: colorMapping.labelLine
+            };
+        } else {
+            // Fall back to tile layer colors (for backward compatibility)
+            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
+            colors = {
+                primary: currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00',
+                secondary: currentTileLayer.secondaryColor || '#88ff88',
+                accent: currentTileLayer.accentColor || '#00ffff',
+                background: currentTileLayer.backgroundColor || 'rgba(0, 20, 40, 0.95)',
+                secondaryBg: currentTileLayer.secondaryBackground || 'rgba(0, 40, 80, 0.8)',
+                border: currentTileLayer.borderColor || currentTileLayer.primaryColor || '#00ff00',
+                hover: currentTileLayer.hoverColor || 'rgba(0, 60, 120, 0.9)',
+                text: currentTileLayer.textColor || currentTileLayer.primaryColor || '#00ff00',
+                shadow: currentTileLayer.shadowColor || 'rgba(0, 255, 0, 0.3)',
+                grid: currentTileLayer.gridColor || currentTileLayer.primaryColor || '#00ff00',
+                gridMajor: currentTileLayer.gridMajorColor || currentTileLayer.primaryColor || '#00ff00',
+                gridMinor: currentTileLayer.gridMinorColor || 'rgba(0, 255, 0, 0.3)',
+                popupBg: currentTileLayer.popupBackground || currentTileLayer.backgroundColor || 'rgba(0, 20, 40, 0.95)',
+                popupText: currentTileLayer.popupTextColor || currentTileLayer.primaryColor || '#00ff00',
+                popupBorder: currentTileLayer.popupBorderColor || currentTileLayer.borderColor || '#00ff00',
+                trackingHighlight: currentTileLayer.trackingHighlightColor || '#ff6600',
+                trackingHighlightBg: currentTileLayer.trackingHighlightBackground || 'rgb(255, 102, 0)'
+            };
+        }
         
         // Update CSS custom properties for dynamic theming
         document.documentElement.style.setProperty('--primary-color', colors.primary);
@@ -3834,7 +4033,7 @@ class RadarDisplay {
         // Update other UI elements
         this.updateMiscUIColors(colors);
         
-        console.log(`Interface colors updated for tile layer: ${currentTileLayer.name}`);
+        console.log('Interface colors updated');
     }
     
     generateInterfaceColors(primaryColor) {
@@ -4011,6 +4210,119 @@ class RadarDisplay {
         
         style.id = 'dynamic-theme-styles';
         document.head.appendChild(style);
+    }
+    
+    // Color Scheme Selection Dialog
+    openColorSchemeDialog() {
+        const dialog = document.createElement('div');
+        dialog.className = 'mapbox-dialog';
+        
+        const dialogContent = document.createElement('div');
+        dialogContent.className = 'mapbox-dialog-content';
+        
+        const title = document.createElement('h2');
+        title.textContent = 'Select Color Scheme';
+        dialogContent.appendChild(title);
+        
+        const info = document.createElement('p');
+        info.className = 'mapbox-info';
+        info.textContent = 'Choose a color scheme for the radar interface:';
+        dialogContent.appendChild(info);
+        
+        const schemeGrid = document.createElement('div');
+        schemeGrid.className = 'mapbox-style-grid';
+        
+        Object.keys(this.colorSchemes).forEach(schemeId => {
+            const scheme = this.colorSchemes[schemeId];
+            const label = document.createElement('label');
+            label.className = 'mapbox-style-option';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'color-scheme';
+            radio.value = schemeId;
+            if (this.currentColorScheme === schemeId) {
+                radio.checked = true;
+            }
+            label.appendChild(radio);
+            
+            const span = document.createElement('span');
+            span.textContent = scheme.name;
+            span.style.color = scheme.primaryColor;
+            label.appendChild(span);
+            
+            schemeGrid.appendChild(label);
+        });
+        
+        dialogContent.appendChild(schemeGrid);
+        
+        const applyBtn = document.createElement('button');
+        applyBtn.className = 'mapbox-btn mapbox-btn-primary';
+        applyBtn.textContent = 'Apply Color Scheme';
+        dialogContent.appendChild(applyBtn);
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'mapbox-btn mapbox-btn-close';
+        closeBtn.textContent = 'Close';
+        dialogContent.appendChild(closeBtn);
+        
+        dialog.appendChild(dialogContent);
+        document.body.appendChild(dialog);
+        
+        applyBtn.addEventListener('click', () => {
+            const selectedRadio = document.querySelector('input[name="color-scheme"]:checked');
+            if (selectedRadio) {
+                this.currentColorScheme = selectedRadio.value;
+                this.setCookie('colorScheme', this.currentColorScheme);
+                this.applyColorScheme();
+                console.log('Color scheme applied: ' + this.colorSchemes[this.currentColorScheme].name);
+            }
+            dialog.remove();
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            dialog.remove();
+        });
+        
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                dialog.remove();
+            }
+        });
+    }
+    
+    applyColorScheme() {
+        const colors = this.colorSchemes[this.currentColorScheme];
+        
+        // Update interface colors
+        const colorMapping = {
+            aircraftColor: colors.aircraftColor,
+            labelBg: colors.labelBackground,
+            labelText: colors.labelTextColor,
+            labelBorder: colors.labelBorderColor,
+            labelLine: colors.labelLineColor,
+            primaryColor: colors.primaryColor,
+            secondaryColor: colors.secondaryColor,
+            accentColor: colors.accentColor,
+            backgroundColor: colors.backgroundColor,
+            secondaryBg: colors.secondaryBackground,
+            borderColor: colors.borderColor,
+            hoverColor: colors.hoverColor,
+            textColor: colors.textColor,
+            shadowColor: colors.shadowColor,
+            gridColor: colors.gridColor,
+            gridMajorColor: colors.gridMajorColor,
+            gridMinorColor: colors.gridMinorColor,
+            popupBg: colors.popupBackground,
+            popupText: colors.popupTextColor,
+            popupBorder: colors.popupBorderColor
+        };
+        
+        this.updateInterfaceColors(colorMapping);
+        
+        // Update aircraft markers and labels
+        this.updateAircraftColors();
+        this.updateLabelColors();
     }
     
     // Tile Layer Selection Dialog
