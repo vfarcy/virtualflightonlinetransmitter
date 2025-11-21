@@ -231,23 +231,49 @@ The server component is a sophisticated PHP-based web application that receives 
 ### Key Features
 
 #### 1. Advanced Radar Display (`radar.php`)
-- **Interactive Map**: Leaflet-based mapping with 6 different map layers
-  - OpenStreetMap
-  - OpenTopoMap
-  - Stamen Terrain
+- **Interactive Map**: Leaflet-based mapping with multiple map layers
+  - OpenStreetMap (classic radar green theme)
   - Satellite imagery
+  - Dark mode
   - Aviation charts
-  - Dark theme maps
-- **Draggable Toolbar**: Professional aviation-style controls
-- **Aircraft Table**: Synchronized, draggable table with click-to-focus
+  - Topographic maps
+  - Terrain relief
+- **Draggable Toolbar**: Professional aviation-style controls with customizable position
+- **Aircraft Visualization**:
+  - Plane icons with rotation showing heading
+  - Draggable aircraft labels with real-time telemetry
+  - Position trails (last 10 positions with fading dots)
+  - Aircraft visibility toggle (hide/show individual aircraft)
+- **Aircraft Table**: 
+  - Synchronized, resizable table with click-to-focus
+  - Sortable columns
+  - Track individual aircraft (orange highlight)
+  - Show/hide aircraft from radar
+  - Custom scrollbar styling
+- **Weather Layers**:
+  - Real-time precipitation radar (RainViewer API)
+  - Auto-refresh every 10 minutes
+  - Toggleable overlay
 - **Smooth Movement**: Physics-based interpolation for realistic aircraft motion
 - **Measurement Tools**:
   - Right-click drag: Distance/bearing measurement in nautical miles
   - Shift+right-click drag: Range rings with radius labels
+  - Persistent measurements (X to clear all)
+- **Grid Overlay**: Latitude/longitude grid with major/minor lines
 - **Aircraft Tracking**: URL parameter support (e.g., `radar.php?callsign=ABC123`)
 - **Keyboard Shortcuts**: Complete keyboard navigation
+  - **L**: Cycle map layers
+  - **G**: Toggle grid
+  - **A**: Toggle aircraft list
+  - **C**: Center on tracked aircraft
+  - **S**: Toggle smooth movement
+  - **T**: Toggle position trails
+  - **W**: Toggle weather radar
+  - **X**: Clear all measurements
+  - **Shift+F**: Toggle fullscreen
 - **Auto-Positioning**: Map automatically centers on active aircraft
 - **5-Second Updates**: Real-time refresh with smooth animations
+- **Theme Synchronization**: All UI elements adapt to current map layer colors
 
 #### 2. Data Endpoints
 

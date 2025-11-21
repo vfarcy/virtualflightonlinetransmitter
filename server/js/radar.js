@@ -59,6 +59,11 @@ class RadarDisplay {
         this.trackedCallsign = null; // Callsign to track from URL parameter
         this.isTrackingEnabled = false; // Whether tracking is currently active
         
+        // Weather radar
+        this.weatherRadarEnabled = false;
+        this.weatherRadarLayer = null;
+        this.weatherRadarUpdateTimer = null;
+        
         // Tile layer configuration
         this.currentTileLayerIndex = 0;
         this.currentTileLayer = null;
@@ -1903,6 +1908,17 @@ class RadarDisplay {
             this.toggleTrails();
         });
         
+        const weatherBtn = document.createElement('button');
+        weatherBtn.className = 'toolbar-btn';
+        weatherBtn.innerHTML = '<i class="fas fa-cloud-rain"></i>';
+        weatherBtn.title = 'Toggle Weather Radar (W)';
+        weatherBtn.id = 'weather-btn';
+        weatherBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleWeatherRadar();
+        });
+        
         const clearMeasurementsBtn = document.createElement('button');
         clearMeasurementsBtn.className = 'toolbar-btn';
         clearMeasurementsBtn.innerHTML = '<i class="fas fa-eraser"></i>';
@@ -1934,6 +1950,7 @@ class RadarDisplay {
         toolbar.appendChild(gridBtn);
         toolbar.appendChild(smoothBtn);
         toolbar.appendChild(trailsBtn);
+        toolbar.appendChild(weatherBtn);
         toolbar.appendChild(clearMeasurementsBtn);
         
         // Add separator
@@ -1955,7 +1972,7 @@ class RadarDisplay {
         this.updateGridButton();
         this.updateSmoothButton();
         this.updateTrailsButton();
-        this.updateTrailsButton();
+        this.updateWeatherButton();
     }
     
     makeDraggable(element, handle) {
@@ -2095,6 +2112,11 @@ class RadarDisplay {
                 case 't':
                 case 'T':
                     this.toggleTrails();
+                    e.preventDefault();
+                    break;
+                case 'w':
+                case 'W':
+                    this.toggleWeatherRadar();
                     e.preventDefault();
                     break;
                 case 'x':
@@ -2712,6 +2734,96 @@ class RadarDisplay {
                 btn.innerHTML = '<i class="fas fa-route"></i>';
                 btn.title = 'Enable Aircraft Trails (T)';
             }
+        }
+    }
+    
+    toggleWeatherRadar() {
+        this.weatherRadarEnabled = !this.weatherRadarEnabled;
+        
+        if (this.weatherRadarEnabled) {
+            this.loadWeatherRadar();
+        } else {
+            this.clearWeatherRadar();
+        }
+        
+        this.updateWeatherButton();
+        console.log(`Weather radar ${this.weatherRadarEnabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    updateWeatherButton() {
+        const btn = document.getElementById('weather-btn');
+        
+        if (btn) {
+            const currentTileLayer = this.tileLayers[this.currentTileLayerIndex];
+            const enabledBackground = currentTileLayer.accentColor || currentTileLayer.primaryColor || '#00ff00';
+            const disabledBackground = currentTileLayer.backgroundColor || 'rgba(0, 40, 80, 0.8)';
+            const textColor = currentTileLayer.primaryColor || currentTileLayer.aircraftColor || '#00ff00';
+            
+            if (this.weatherRadarEnabled) {
+                btn.style.background = enabledBackground;
+                btn.style.color = '#ffffff';
+                btn.style.borderColor = enabledBackground;
+                btn.innerHTML = '<i class="fas fa-cloud-rain"></i>';
+                btn.title = 'Disable Weather Radar (W)';
+            } else {
+                btn.style.background = disabledBackground;
+                btn.style.color = textColor;
+                btn.style.borderColor = textColor;
+                btn.innerHTML = '<i class="fas fa-cloud-rain"></i>';
+                btn.title = 'Enable Weather Radar (W)';
+            }
+        }
+    }
+    
+    async loadWeatherRadar() {
+        try {
+            // Use RainViewer API for weather radar data
+            const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+            const data = await response.json();
+            
+            if (data && data.radar && data.radar.past && data.radar.past.length > 0) {
+                const latestRadar = data.radar.past[data.radar.past.length - 1];
+                const tileUrl = `https://tilecache.rainviewer.com${latestRadar.path}/256/{z}/{x}/{y}/2/1_1.png`;
+                
+                // Remove existing weather layer if any
+                this.clearWeatherRadar();
+                
+                // Create new weather radar layer
+                this.weatherRadarLayer = L.tileLayer(tileUrl, {
+                    opacity: 0.6,
+                    attribution: 'Weather data © <a href="https://rainviewer.com">RainViewer</a>',
+                    zIndex: 200,
+                    tileSize: 256
+                });
+                
+                this.weatherRadarLayer.addTo(this.map);
+                
+                // Auto-update every 10 minutes
+                if (this.weatherRadarUpdateTimer) {
+                    clearInterval(this.weatherRadarUpdateTimer);
+                }
+                this.weatherRadarUpdateTimer = setInterval(() => {
+                    if (this.weatherRadarEnabled) {
+                        this.loadWeatherRadar();
+                    }
+                }, 600000); // 10 minutes
+                
+                console.log('Weather radar loaded');
+            }
+        } catch (error) {
+            console.error('Error loading weather radar:', error);
+        }
+    }
+    
+    clearWeatherRadar() {
+        if (this.weatherRadarLayer) {
+            this.map.removeLayer(this.weatherRadarLayer);
+            this.weatherRadarLayer = null;
+        }
+        
+        if (this.weatherRadarUpdateTimer) {
+            clearInterval(this.weatherRadarUpdateTimer);
+            this.weatherRadarUpdateTimer = null;
         }
     }
     
@@ -3710,6 +3822,8 @@ class RadarDisplay {
         this.updateGridButton();
         this.updateAircraftListButton();
         this.updateSmoothButton();
+        this.updateTrailsButton();
+        this.updateWeatherButton();
         // Update tracking indicator if tracking is active
         if (this.isTrackingEnabled && this.trackedCallsign) {
             this.updateTrackingIndicator(true);
