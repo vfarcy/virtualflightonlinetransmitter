@@ -8,6 +8,41 @@ Download the latest Windows installer from the releases page:
 
 [https://github.com/jonbeckett/virtualflightonlinetransmitter/releases/](https://github.com/jonbeckett/virtualflightonlinetransmitter/releases/)
 
+---
+
+## 🚀 Quick Start
+
+### For Microsoft Flight Simulator Users (Windows)
+
+1. **Download the installer** from [GitHub Releases](https://github.com/jonbeckett/virtualflightonlinetransmitter/releases/)
+2. **Run the installer** - it will install to `C:\Program Files\Transmitter\` by default
+3. **Launch Microsoft Flight Simulator** first and load into a flight
+4. **Run the Transmitter application** from your Start Menu or desktop shortcut
+5. **Configure your settings**:
+   - Server URL: `http://yourserver/transmitter/transmit` (or use a public server)
+   - Your callsign (e.g., N12345, AAL123)
+   - Pilot name
+   - Group name (optional)
+   - PIN (if your server requires it)
+6. **Click Connect** - you should see "Connected" status with latency in milliseconds
+
+### For X-Plane Users (Windows/Mac/Linux)
+
+1. **Install FlyWithLua** (if not already installed):
+   - Download from [X-Plane.org](https://forums.x-plane.org/index.php?/files/file/38445-flywithlua-ng-next-generation-edition-for-x-plane-11-win-lin-mac/)
+   - Extract the `FlyWithLua` folder to `X-Plane/Resources/plugins/`
+
+2. **Install the Transmitter script**:
+   - Download `transmitter_xp.lua` from this repository's `lua_script` folder
+   - Copy it to `X-Plane/Resources/plugins/FlyWithLua/Scripts/`
+   - Restart X-Plane or reload scripts: **Plugins → FlyWithLua → Reload all Lua script files**
+
+3. **Configure and connect**:
+   - In X-Plane, go to **Plugins → FlyWithLua → Macros → Transmitter XP: Show Window**
+   - Enter your server URL, callsign, pilot name, group name, and PIN
+   - Click **Connect**
+   - Settings are automatically saved for next time
+
 > **Note:** VirtualFlight.Online no longer operates their own Transmitter server, but you can set up your own using the server files in this repository.
 
 ---
@@ -42,6 +77,25 @@ The Windows client is a .NET Framework 4.7.2 application that connects to Micros
 - **Connection Status**: Visual indicators showing connection state and communication latency
 - **Minimal Resource Usage**: Lightweight application that runs alongside the simulator
 
+### Installation
+
+#### Option 1: Using the Installer (Recommended)
+
+1. **Download** the latest installer from [GitHub Releases](https://github.com/jonbeckett/virtualflightonlinetransmitter/releases/)
+2. **Run** the installer executable (e.g., `transmitter_installer.exe`)
+3. **Follow** the installation wizard:
+   - Choose installation directory (default: `C:\Program Files\Transmitter\`)
+   - Select whether to create a desktop shortcut
+   - Click Install
+4. **Complete** the installation - the application is now ready to use
+
+#### Option 2: Manual Installation
+
+1. **Download** the compiled binaries or build from source
+2. **Extract** all files to a folder of your choice
+3. **Ensure** you have .NET Framework 4.7.2 or higher installed
+4. **Run** `VirtualFlightOnlineTransmitter.exe`
+
 ### Technical Details
 
 **Technology Stack:**
@@ -63,17 +117,26 @@ The Windows client is a .NET Framework 4.7.2 application that connects to Micros
 
 ### Configuration
 
-1. Launch Microsoft Flight Simulator
-2. Run VirtualFlight.Online Transmitter
-3. Configure:
-   - **Server URL**: URL of your transmitter server's `transmit.php` endpoint
-   - **Callsign**: Your aircraft callsign (e.g., N12345, AAL123)
-   - **Pilot Name**: Your name or username
-   - **Group Name**: Organization or group identifier
-   - **PIN**: Optional security PIN (must match server configuration)
-4. Click **Connect**
+Configuration is straightforward:
 
-> **Important:** The PIN in the client MUST match the server's PIN configuration if PIN authentication is enabled.
+1. **Launch Microsoft Flight Simulator** - The transmitter requires MSFS to be running first
+2. **Run the Transmitter application** from Start Menu or desktop
+3. **Enter your settings**:
+   - **Server URL**: `http://yourserver/transmitter/transmit`
+   - **Callsign**: e.g., N12345, AAL123
+   - **Pilot Name**: Your name or username
+   - **Group Name**: Organization identifier (optional)
+   - **PIN**: Server PIN if required
+4. **Click Connect** - status should show "Connected" with latency
+
+> **Important:** The PIN must match the server's configuration if PIN authentication is enabled.
+
+### Troubleshooting
+
+- **"Cannot connect to simulator"**: Make sure MSFS is fully loaded and in-game before starting the transmitter
+- **"Connection failed"**: Verify the server URL is correct and includes `/transmit` at the end
+- **High latency**: Check your internet connection and server responsiveness
+- **PIN errors**: Ensure your PIN matches the server configuration exactly
 
 ---
 
@@ -101,27 +164,76 @@ The Windows client is a .NET Framework 4.7.2 application that connects to Micros
 
 ### Installation
 
-1. **Install FlyWithLua** (if not already installed):
-   - Download from [X-Plane.org](https://forums.x-plane.org/index.php?/files/file/38445-flywithlua-ng-next-generation-edition-for-x-plane-11-win-lin-mac/)
-   - Extract and copy the `FlyWithLua` folder to `X-Plane/Resources/plugins/`
+**Step 1: Install FlyWithLua (if not already installed)**
 
-2. **Install Transmitter XP**:
-   - Copy `transmitter_xp.lua` to `X-Plane/Resources/plugins/FlyWithLua/Scripts/`
-   - Restart X-Plane or reload Lua scripts: **Plugins → FlyWithLua → Reload all Lua script files**
+1. **Download FlyWithLua**:
+   - Visit [X-Plane.org FlyWithLua page](https://forums.x-plane.org/index.php?/files/file/38445-flywithlua-ng-next-generation-edition-for-x-plane-11-win-lin-mac/)
+   - Download the appropriate version for your platform
+
+2. **Extract the archive**:
+   - You'll get a folder named `FlyWithLua` or similar
+
+3. **Install to X-Plane**:
+   - Copy the `FlyWithLua` folder to:
+     - **Windows**: `C:\X-Plane 12\Resources\plugins\`
+     - **Mac**: `/Applications/X-Plane 12/Resources/plugins/`
+     - **Linux**: `~/X-Plane 12/Resources/plugins/`
+   - Final path should be: `X-Plane/Resources/plugins/FlyWithLua/`
+
+4. **Verify installation**:
+   - Launch X-Plane
+   - Check **Plugins** menu - you should see **FlyWithLua** listed
+
+**Step 2: Install Transmitter XP Script**
+
+1. **Download the script**:
+   - Get `transmitter_xp.lua` from this repository's `lua_script` folder
+   - Or download from [GitHub](https://github.com/jonbeckett/virtualflightonlinetransmitter/tree/main/lua_script)
+
+2. **Copy to Scripts folder**:
+   - Place `transmitter_xp.lua` in:
+     - `X-Plane/Resources/plugins/FlyWithLua/Scripts/`
+   - The file should be directly in the Scripts folder, not in a subfolder
+
+3. **Reload scripts** (choose one):
+   - **Option A**: Restart X-Plane completely
+   - **Option B**: In X-Plane, go to **Plugins → FlyWithLua → Reload all Lua script files**
+
+4. **Verify installation**:
+   - Go to **Plugins → FlyWithLua → Macros**
+   - You should see **"Transmitter XP: Show Window"** in the list
 
 ### Usage
 
-**Opening the Window:**
-- **Method 1**: Plugins → FlyWithLua → Macros → Transmitter XP: Show Window
-- **Method 2**: FlyWithLua Quick Access Menu
+#### Opening the Transmitter Window
 
-**Configuration:**
-- Server URL (default: `http://transmitter.virtualflight.online/transmit`)
-- Callsign, Pilot Name, Group Name, PIN, Notes
-- Settings are editable only when disconnected
-- Configuration automatically saved and loaded between sessions
+Choose one of these methods:
+- **Plugins → FlyWithLua → Macros → Transmitter XP: Show Window**
+- **FlyWithLua Quick Access Menu** (if configured)
 
-**Transmitted Data:**
+#### First-Time Configuration
+
+1. **Open the Transmitter XP window**
+2. **Enter your details** (settings are editable only when disconnected):
+   - **Server URL**: e.g., `http://yourserver/transmitter/transmit`
+   - **Callsign**: e.g., N12345
+   - **Pilot Name**: Your name
+   - **Group Name**: Your organization (optional)
+   - **PIN**: Server PIN if required
+   - **Notes**: Flight notes (optional)
+3. **Click "Connect"**
+4. **Verify** status shows "Connected"
+
+> **Note:** Settings are automatically saved to `X-Plane/Output/preferences/transmitter_xp_config.txt`
+
+#### During Flight
+
+- The window can remain open or be closed - transmission continues either way
+- To stop transmitting, reopen the window and click **"Disconnect"**
+- To change settings, disconnect first, make changes, then reconnect
+
+#### Transmitted Data
+
 - Aircraft ICAO type code
 - Latitude/Longitude (decimal degrees)
 - Altitude (meters MSL)
@@ -130,6 +242,13 @@ The Windows client is a .NET Framework 4.7.2 application that connects to Micros
 - True heading (degrees)
 - Transponder code
 - Landing touchdown velocity
+
+### Troubleshooting
+
+- **Script not appearing in Macros**: Ensure the file is in the Scripts folder, not Scripts/disabled
+- **Connection fails**: Verify server URL is correct and accessible from your network
+- **LuaSocket errors**: Reinstall FlyWithLua - LuaSocket should be included
+- **Settings not saving**: Check X-Plane has write permissions to Output/preferences folder
 
 ---
 
