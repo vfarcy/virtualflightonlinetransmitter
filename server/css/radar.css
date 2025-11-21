@@ -655,3 +655,213 @@ body {
         box-shadow: 0 0 10px rgba(255, 102, 0, 0.8);
     }
 }
+
+/* MapBox Dialog Styles */
+.mapbox-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.mapbox-dialog-content {
+    background: var(--background-color);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.mapbox-dialog-content h2 {
+    color: var(--primary-color);
+    margin: 0 0 15px 0;
+    font-size: 24px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.mapbox-dialog-content h3 {
+    color: var(--primary-color);
+    margin: 20px 0 15px 0;
+    font-size: 18px;
+}
+
+.mapbox-info {
+    color: var(--text-color);
+    font-size: 14px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.mapbox-info a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+.mapbox-info a:hover {
+    text-decoration: underline;
+}
+
+.mapbox-token-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--secondary-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.mapbox-token-section label {
+    display: block;
+    color: var(--primary-color);
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+#mapbox-token-input {
+    width: 100%;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+#mapbox-token-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 8px var(--shadow-color);
+}
+
+.mapbox-styles-section {
+    transition: opacity 0.3s ease;
+}
+
+.mapbox-style-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.mapbox-style-option {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: var(--secondary-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mapbox-style-option:hover {
+    background: var(--hover-color);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.mapbox-style-option input[type="radio"] {
+    margin-right: 12px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.mapbox-style-option span {
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.mapbox-style-option input[type="radio"]:checked + span {
+    color: var(--accent-color);
+}
+
+.mapbox-btn {
+    padding: 12px 24px;
+    background: var(--secondary-bg);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.mapbox-btn:hover {
+    background: var(--hover-color);
+    border-color: var(--accent-color);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.mapbox-btn:active {
+    transform: translateY(0);
+}
+
+.mapbox-btn-primary {
+    background: var(--primary-color);
+    color: #000000;
+    border-color: var(--primary-color);
+    width: 100%;
+    margin-right: 0;
+}
+
+.mapbox-btn-primary:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: #000000;
+}
+
+.mapbox-btn-secondary {
+    background: rgba(255, 100, 100, 0.2);
+    border-color: #ff6464;
+    color: #ff6464;
+}
+
+.mapbox-btn-secondary:hover {
+    background: rgba(255, 100, 100, 0.4);
+    border-color: #ff3333;
+    color: #ffffff;
+}
+
+.mapbox-btn-close {
+    background: var(--background-color);
+    border-color: var(--border-color);
+    width: 100%;
+    margin: 20px 0 0 0;
+}
+
+.mapbox-btn-close:hover {
+    background: var(--secondary-bg);
+    border-color: var(--accent-color);
+}
+

@@ -64,6 +64,11 @@ class RadarDisplay {
         this.weatherRadarLayer = null;
         this.weatherRadarUpdateTimer = null;
         
+        // MapBox integration
+        this.mapboxToken = '';
+        this.mapboxStyleId = 'streets-v12';
+        this.mapboxDialogOpen = false;
+        
         // Tile layer configuration
         this.currentTileLayerIndex = 0;
         this.currentTileLayer = null;
@@ -249,42 +254,6 @@ class RadarDisplay {
                 measurementColor: '#cc0000'
             },
             {
-                name: 'No Map',
-                url: null,
-                attribution: '',
-                className: '',
-                opacity: 0,
-                // Aircraft and label colors
-                aircraftColor: '#1e90ff',
-                labelBackground: 'rgb(240, 248, 255)',
-                labelTextColor: '#1e90ff',
-                labelBorderColor: '#1e90ff',
-                labelLineColor: '#1e90ff',
-                // Interface colors
-                primaryColor: '#1e90ff',
-                secondaryColor: '#4da6ff',
-                accentColor: '#00bfff',
-                backgroundColor: 'rgba(240, 248, 255, 0.95)',
-                secondaryBackground: 'rgba(200, 230, 255, 0.8)',
-                borderColor: '#1e90ff',
-                hoverColor: 'rgba(100, 180, 255, 0.9)',
-                textColor: '#1e90ff',
-                shadowColor: 'rgba(30, 144, 255, 0.3)',
-                // Grid colors
-                gridColor: '#1e90ff',
-                gridMajorColor: '#1e90ff',
-                gridMinorColor: 'rgba(30, 144, 255, 0.3)',
-                // Popup colors
-                popupBackground: 'rgba(240, 248, 255, 0.95)',
-                popupTextColor: '#1e90ff',
-                popupBorderColor: '#1e90ff',
-                // Tracking highlight colors
-                trackingHighlightColor: '#ff6600',
-                trackingHighlightBackground: 'rgb(255, 102, 0)',
-                // Measurement colors
-                measurementColor: '#0099ff'
-            },
-            {
                 name: 'CartoDB Light',
                 url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
                 attribution: '© OpenStreetMap contributors © CARTO',
@@ -400,6 +369,16 @@ class RadarDisplay {
     }
     
     init() {
+        // Load MapBox settings from cookies
+        const savedToken = this.getCookie('mapboxToken');
+        const savedStyleId = this.getCookie('mapboxStyleId');
+        if (savedToken) {
+            this.mapboxToken = savedToken;
+        }
+        if (savedStyleId) {
+            this.mapboxStyleId = savedStyleId;
+        }
+        
         this.parseUrlParameters();
         this.initMap();
         this.startRadarUpdates();
@@ -1638,21 +1617,21 @@ class RadarDisplay {
         const bounds = this.map.getBounds();
         const zoom = this.map.getZoom();
         
-        // Calculate grid spacing based on zoom level
+        // Calculate grid spacing based on zoom level - finer resolution for more squares
         let latSpacing, lngSpacing;
         
         if (zoom <= 3) {
-            latSpacing = lngSpacing = 30; // 30 degree grid
-        } else if (zoom <= 5) {
             latSpacing = lngSpacing = 10; // 10 degree grid
-        } else if (zoom <= 7) {
+        } else if (zoom <= 5) {
             latSpacing = lngSpacing = 5; // 5 degree grid
-        } else if (zoom <= 9) {
+        } else if (zoom <= 7) {
             latSpacing = lngSpacing = 1; // 1 degree grid
+        } else if (zoom <= 9) {
+            latSpacing = lngSpacing = 0.25; // 15 minute grid
         } else if (zoom <= 11) {
-            latSpacing = lngSpacing = 0.5; // 30 minute grid
-        } else {
             latSpacing = lngSpacing = 0.1; // 6 minute grid
+        } else {
+            latSpacing = lngSpacing = 0.05; // 3 minute grid
         }
         
         const gridLines = [];
@@ -1680,7 +1659,7 @@ class RadarDisplay {
                 ], {
                     color: isMajorLine ? gridMajorColor : gridMinorColor,
                     weight: isMajorLine ? 1.5 : 0.8,
-                    opacity: isMajorLine ? 0.6 : 0.3,
+                    opacity: isMajorLine ? 0.6 : 0.5,
                     dashArray: isMajorLine ? null : '2, 4'
                 });
                 gridLines.push(line);
@@ -1711,7 +1690,7 @@ class RadarDisplay {
                 ], {
                     color: isMajorLine ? gridMajorColor : gridMinorColor,
                     weight: isMajorLine ? 1.5 : 0.8,
-                    opacity: isMajorLine ? 0.6 : 0.3,
+                    opacity: isMajorLine ? 0.6 : 0.5,
                     dashArray: isMajorLine ? null : '2, 4'
                 });
                 gridLines.push(line);
@@ -1919,6 +1898,17 @@ class RadarDisplay {
             this.toggleWeatherRadar();
         });
         
+        const mapboxBtn = document.createElement('button');
+        mapboxBtn.className = 'toolbar-btn';
+        mapboxBtn.innerHTML = '<i class="fas fa-map-marked-alt"></i>';
+        mapboxBtn.title = 'MapBox Layers (M)';
+        mapboxBtn.id = 'mapbox-btn';
+        mapboxBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.openMapBoxDialog();
+        });
+        
         const clearMeasurementsBtn = document.createElement('button');
         clearMeasurementsBtn.className = 'toolbar-btn';
         clearMeasurementsBtn.innerHTML = '<i class="fas fa-eraser"></i>';
@@ -1951,6 +1941,7 @@ class RadarDisplay {
         toolbar.appendChild(smoothBtn);
         toolbar.appendChild(trailsBtn);
         toolbar.appendChild(weatherBtn);
+        toolbar.appendChild(mapboxBtn);
         toolbar.appendChild(clearMeasurementsBtn);
         
         // Add separator
@@ -2119,6 +2110,11 @@ class RadarDisplay {
                     this.toggleWeatherRadar();
                     e.preventDefault();
                     break;
+                case 'm':
+                case 'M':
+                    this.openMapBoxDialog();
+                    e.preventDefault();
+                    break;
                 case 'x':
                 case 'X':
                     this.clearAllMeasurements();
@@ -2148,15 +2144,8 @@ class RadarDisplay {
     }
     
     cycleTileLayer() {
-        // Cycle to the next tile layer
-        this.currentTileLayerIndex = (this.currentTileLayerIndex + 1) % this.tileLayers.length;
-        this.loadTileLayer(this.currentTileLayerIndex);
-        
-        // Show notification of layer change
-        this.showLayerNotification();
-        
-        // Also log to console for debugging
-        console.log(`Switched to layer ${this.currentTileLayerIndex + 1}/${this.tileLayers.length}: ${this.tileLayers[this.currentTileLayerIndex].name}`);
+        // Open tile layer selection dialog instead of cycling
+        this.openTileLayerDialog();
     }
     
     // Add method to jump directly to a layer by index (for testing)
@@ -3824,6 +3813,7 @@ class RadarDisplay {
         this.updateSmoothButton();
         this.updateTrailsButton();
         this.updateWeatherButton();
+        
         // Update tracking indicator if tracking is active
         if (this.isTrackingEnabled && this.trackedCallsign) {
             this.updateTrackingIndicator(true);
@@ -4022,7 +4012,385 @@ class RadarDisplay {
         style.id = 'dynamic-theme-styles';
         document.head.appendChild(style);
     }
+    
+    // Tile Layer Selection Dialog
+    openTileLayerDialog() {
+        const dialog = document.createElement('div');
+        dialog.className = 'mapbox-dialog';
+        
+        const dialogContent = document.createElement('div');
+        dialogContent.className = 'mapbox-dialog-content';
+        
+        const title = document.createElement('h2');
+        title.textContent = 'Select Map Layer';
+        dialogContent.appendChild(title);
+        
+        const info = document.createElement('p');
+        info.className = 'mapbox-info';
+        info.textContent = 'Choose a base map layer for the radar display:';
+        dialogContent.appendChild(info);
+        
+        const layerGrid = document.createElement('div');
+        layerGrid.className = 'mapbox-style-grid';
+        
+        this.tileLayers.forEach((layer, index) => {
+            const label = document.createElement('label');
+            label.className = 'mapbox-style-option';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'tile-layer';
+            radio.value = index;
+            if (this.currentTileLayerIndex === index) {
+                radio.checked = true;
+            }
+            label.appendChild(radio);
+            
+            const span = document.createElement('span');
+            span.textContent = layer.name;
+            label.appendChild(span);
+            
+            layerGrid.appendChild(label);
+        });
+        
+        dialogContent.appendChild(layerGrid);
+        
+        const applyBtn = document.createElement('button');
+        applyBtn.className = 'mapbox-btn mapbox-btn-primary';
+        applyBtn.textContent = 'Apply Layer';
+        dialogContent.appendChild(applyBtn);
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'mapbox-btn mapbox-btn-close';
+        closeBtn.textContent = 'Close';
+        dialogContent.appendChild(closeBtn);
+        
+        dialog.appendChild(dialogContent);
+        document.body.appendChild(dialog);
+        
+        applyBtn.addEventListener('click', () => {
+            const selectedRadio = document.querySelector('input[name="tile-layer"]:checked');
+            if (selectedRadio) {
+                const layerIndex = parseInt(selectedRadio.value);
+                this.currentTileLayerIndex = layerIndex;
+                this.loadTileLayer(layerIndex);
+                this.showLayerNotification();
+                console.log('Switched to layer: ' + this.tileLayers[layerIndex].name);
+            }
+            dialog.remove();
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            dialog.remove();
+        });
+        
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                dialog.remove();
+            }
+        });
+    }
+    
+    // Cookie management functions
+    setCookie(name, value, days) {
+        if (days === undefined) {
+            days = 365;
+        }
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+    }
+    
+    getCookie(name) {
+        const nameEQ = name + '=';
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') {
+                c = c.substring(1, c.length);
+            }
+            if (c.indexOf(nameEQ) === 0) {
+                return c.substring(nameEQ.length, c.length);
+            }
+        }
+        return null;
+    }
+    
+    // MapBox integration functions
+    openMapBoxDialog() {
+        if (this.mapboxDialogOpen) {
+            return;
+        }
+        this.mapboxDialogOpen = true;
+        
+        const dialog = document.createElement('div');
+        dialog.className = 'mapbox-dialog';
+        
+        const dialogContent = document.createElement('div');
+        dialogContent.className = 'mapbox-dialog-content';
+        
+        const title = document.createElement('h2');
+        title.textContent = 'MapBox Layers';
+        dialogContent.appendChild(title);
+        
+        const info = document.createElement('p');
+        info.className = 'mapbox-info';
+        info.innerHTML = 'Enter your MapBox API token to access MapBox map styles. Get your free token at <a href="https://www.mapbox.com" target="_blank">mapbox.com</a>';
+        dialogContent.appendChild(info);
+        
+        // Token section
+        const tokenSection = document.createElement('div');
+        tokenSection.className = 'mapbox-token-section';
+        
+        const tokenLabel = document.createElement('label');
+        tokenLabel.setAttribute('for', 'mapbox-token-input');
+        tokenLabel.textContent = 'MapBox API Token:';
+        tokenSection.appendChild(tokenLabel);
+        
+        const tokenInput = document.createElement('input');
+        tokenInput.type = 'text';
+        tokenInput.id = 'mapbox-token-input';
+        tokenInput.value = this.mapboxToken;
+        tokenInput.placeholder = 'pk.eyJ1...';
+        tokenSection.appendChild(tokenInput);
+        
+        const saveTokenBtn = document.createElement('button');
+        saveTokenBtn.id = 'mapbox-save-token';
+        saveTokenBtn.className = 'mapbox-btn';
+        saveTokenBtn.textContent = 'Save Token';
+        tokenSection.appendChild(saveTokenBtn);
+        
+        const clearTokenBtn = document.createElement('button');
+        clearTokenBtn.id = 'mapbox-clear-token';
+        clearTokenBtn.className = 'mapbox-btn mapbox-btn-secondary';
+        clearTokenBtn.textContent = 'Clear Token';
+        tokenSection.appendChild(clearTokenBtn);
+        
+        dialogContent.appendChild(tokenSection);
+        
+        // Styles section
+        const stylesSection = document.createElement('div');
+        stylesSection.className = 'mapbox-styles-section';
+        if (!this.mapboxToken) {
+            stylesSection.style.opacity = '0.5';
+            stylesSection.style.pointerEvents = 'none';
+        }
+        
+        const stylesTitle = document.createElement('h3');
+        stylesTitle.textContent = 'Select Map Style:';
+        stylesSection.appendChild(stylesTitle);
+        
+        const styleGrid = document.createElement('div');
+        styleGrid.className = 'mapbox-style-grid';
+        
+        const styles = [
+            { id: 'streets-v12', name: 'Streets' },
+            { id: 'outdoors-v12', name: 'Outdoors' },
+            { id: 'light-v11', name: 'Light' },
+            { id: 'dark-v11', name: 'Dark' },
+            { id: 'satellite-v9', name: 'Satellite' },
+            { id: 'satellite-streets-v12', name: 'Satellite Streets' },
+            { id: 'navigation-day-v1', name: 'Navigation Day' },
+            { id: 'navigation-night-v1', name: 'Navigation Night' }
+        ];
+        
+        styles.forEach(style => {
+            const label = document.createElement('label');
+            label.className = 'mapbox-style-option';
+            
+            const radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = 'mapbox-style';
+            radio.value = style.id;
+            if (this.mapboxStyleId === style.id) {
+                radio.checked = true;
+            }
+            label.appendChild(radio);
+            
+            const span = document.createElement('span');
+            span.textContent = style.name;
+            label.appendChild(span);
+            
+            styleGrid.appendChild(label);
+        });
+        
+        stylesSection.appendChild(styleGrid);
+        
+        const applyStyleBtn = document.createElement('button');
+        applyStyleBtn.id = 'mapbox-apply-style';
+        applyStyleBtn.className = 'mapbox-btn mapbox-btn-primary';
+        applyStyleBtn.textContent = 'Apply Style';
+        stylesSection.appendChild(applyStyleBtn);
+        
+        dialogContent.appendChild(stylesSection);
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.id = 'mapbox-close';
+        closeBtn.className = 'mapbox-btn mapbox-btn-close';
+        closeBtn.textContent = 'Close';
+        dialogContent.appendChild(closeBtn);
+        
+        dialog.appendChild(dialogContent);
+        document.body.appendChild(dialog);
+        
+        // Add event listeners
+        saveTokenBtn.addEventListener('click', () => {
+            const token = tokenInput.value.trim();
+            if (token) {
+                this.mapboxToken = token;
+                this.setCookie('mapboxToken', token);
+                stylesSection.style.opacity = '1';
+                stylesSection.style.pointerEvents = 'auto';
+                alert('MapBox token saved! You can now select a map style.');
+            }
+        });
+        
+        clearTokenBtn.addEventListener('click', () => {
+            this.mapboxToken = '';
+            this.setCookie('mapboxToken', '', -1);
+            tokenInput.value = '';
+            stylesSection.style.opacity = '0.5';
+            stylesSection.style.pointerEvents = 'none';
+            alert('MapBox token cleared.');
+        });
+        
+        applyStyleBtn.addEventListener('click', () => {
+            if (!this.mapboxToken) {
+                alert('Please save your MapBox token first.');
+                return;
+            }
+            const selectedRadio = document.querySelector('input[name="mapbox-style"]:checked');
+            if (selectedRadio) {
+                this.mapboxStyleId = selectedRadio.value;
+                this.setCookie('mapboxStyleId', this.mapboxStyleId);
+                this.applyMapBoxStyle();
+                this.closeMapBoxDialog();
+            }
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            this.closeMapBoxDialog();
+        });
+        
+        dialog.addEventListener('click', (e) => {
+            if (e.target === dialog) {
+                this.closeMapBoxDialog();
+            }
+        });
+    }
+    
+    closeMapBoxDialog() {
+        const dialog = document.querySelector('.mapbox-dialog');
+        if (dialog) {
+            dialog.remove();
+        }
+        this.mapboxDialogOpen = false;
+    }
+    
+    applyMapBoxStyle() {
+        if (!this.mapboxToken) {
+            alert('MapBox token is required. Please enter your token in the MapBox dialog.');
+            return;
+        }
+        
+        if (this.currentTileLayer) {
+            this.map.removeLayer(this.currentTileLayer);
+        }
+        
+        const url = 'https://api.mapbox.com/styles/v1/mapbox/' + this.mapboxStyleId + '/tiles/{z}/{x}/{y}?access_token=' + this.mapboxToken;
+        
+        this.currentTileLayer = L.tileLayer(url, {
+            attribution: '© Mapbox © OpenStreetMap',
+            tileSize: 512,
+            zoomOffset: -1,
+            maxZoom: 22
+        });
+        
+        this.currentTileLayer.addTo(this.map);
+        
+        this.updateMapBoxUIColors();
+        
+        console.log('MapBox style applied: ' + this.mapboxStyleId);
+    }
+    
+    updateMapBoxUIColors() {
+        const colorSchemes = {
+            'streets-v12': {
+                aircraftColor: '#1a73e8',
+                labelBackground: 'rgb(255, 255, 255)',
+                labelTextColor: '#1a73e8',
+                primaryColor: '#1a73e8'
+            },
+            'outdoors-v12': {
+                aircraftColor: '#4a7c59',
+                labelBackground: 'rgb(255, 255, 255)',
+                labelTextColor: '#2d5a3a',
+                primaryColor: '#4a7c59'
+            },
+            'light-v11': {
+                aircraftColor: '#2563eb',
+                labelBackground: 'rgb(255, 255, 255)',
+                labelTextColor: '#1e40af',
+                primaryColor: '#2563eb'
+            },
+            'dark-v11': {
+                aircraftColor: '#40e0d0',
+                labelBackground: 'rgb(0, 0, 0)',
+                labelTextColor: '#40e0d0',
+                primaryColor: '#40e0d0'
+            },
+            'satellite-v9': {
+                aircraftColor: '#fff',
+                labelBackground: 'rgb(0, 0, 0)',
+                labelTextColor: '#fff',
+                primaryColor: '#fff'
+            },
+            'satellite-streets-v12': {
+                aircraftColor: '#fff',
+                labelBackground: 'rgb(0, 0, 0)',
+                labelTextColor: '#fff',
+                primaryColor: '#fff'
+            },
+            'navigation-day-v1': {
+                aircraftColor: '#1a73e8',
+                labelBackground: 'rgb(255, 255, 255)',
+                labelTextColor: '#1a73e8',
+                primaryColor: '#1a73e8'
+            },
+            'navigation-night-v1': {
+                aircraftColor: '#60a5fa',
+                labelBackground: 'rgb(0, 0, 0)',
+                labelTextColor: '#60a5fa',
+                primaryColor: '#60a5fa'
+            }
+        };
+        
+        const colors = colorSchemes[this.mapboxStyleId] || colorSchemes['streets-v12'];
+        
+        this.aircraftMarkers.forEach((marker, callsign) => {
+            const icon = marker.options.icon;
+            if (icon && icon.options.html) {
+                const newHtml = icon.options.html.replace(/fill="[^"]*"/, 'fill="' + colors.aircraftColor + '"');
+                marker.setIcon(L.divIcon({
+                    className: icon.options.className,
+                    html: newHtml,
+                    iconSize: icon.options.iconSize,
+                    iconAnchor: icon.options.iconAnchor
+                }));
+            }
+        });
+        
+        this.labelLayers.forEach((labelGroup, callsign) => {
+            const label = labelGroup.label;
+            if (label && label._icon) {
+                label._icon.style.background = colors.labelBackground;
+                label._icon.style.color = colors.labelTextColor;
+                label._icon.style.borderColor = colors.primaryColor;
+            }
+        });
+    }
 }
+
 
 // Initialize the radar display when the page loads
 document.addEventListener('DOMContentLoaded', () => {
